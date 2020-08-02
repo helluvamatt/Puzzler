@@ -12,5 +12,10 @@
 				<ImageBrush ImageSource="green_felt.png" Viewport="0,0,512,512" ViewportUnits="Absolute" TileMode="Tile" Stretch="None" AlignmentX="Left" AlignmentY="Top" />
 			</m:PuzzleBackgroundDescriptor.BackgroundBrush>
 		</m:PuzzleBackgroundDescriptor>
+		<m:PuzzleBackgroundDescriptor Key="10FCFCCF-7A5A-4608-9568-8370D9BCEE7D" Description="Wood">
+			<m:PuzzleBackgroundDescriptor.BackgroundBrush>
+				<ImageBrush ImageSource="wood.png" Viewport="0,0,512,512" ViewportUnits="Absolute" TileMode="Tile" Stretch="None" AlignmentX="Left" AlignmentY="Top" />
+			</m:PuzzleBackgroundDescriptor.BackgroundBrush>
+		</m:PuzzleBackgroundDescriptor>
 	</x:Array>
 </ResourceDictionary>

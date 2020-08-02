@@ -122,6 +122,7 @@
     <Resource Include="Backgrounds\green_felt.png" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Backgrounds\wood.png" />
     <Resource Include="appicon.ico" />
     <Content Include="appicon.svg" />
   </ItemGroup>
