@@ -158,7 +158,7 @@ namespace Puzzler.ViewModels
 
 		#region Zoom
 
-		public static readonly DependencyProperty ZoomProperty = DependencyProperty.Register(nameof(Zoom), typeof(double), typeof(ShellViewModel), new PropertyMetadata(0.5));
+		public static readonly DependencyProperty ZoomProperty = DependencyProperty.Register(nameof(Zoom), typeof(double), typeof(ShellViewModel), new PropertyMetadata(1.0));
 
 		public double Zoom
 		{

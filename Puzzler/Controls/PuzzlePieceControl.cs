@@ -10,9 +10,9 @@ namespace Puzzler.Controls
 {
 	public class PuzzlePieceControl : FrameworkElement, IComparable<PuzzlePieceControl>
 	{
-		public const int PieceSize = 140;
-		public const int GridSize = 100;
-		public const int TabSize = 20;
+		public const int PieceSize = 70;
+		public const int GridSize = 50;
+		public const int TabSize = 10;
 
 		private BitmapSource _Image;
 		private Geometry _Geometry;
@@ -73,7 +73,7 @@ namespace Puzzler.Controls
 				{
 					Brush = new SolidColorBrush(Colors.Black),
 					LineJoin = PenLineJoin.Round,
-					Thickness = 3.0,
+					Thickness = 1,
 				};
 				_Geometry = GetPathGeometry(Piece.NorthConnection, Piece.SouthConnection, Piece.EastConnection, Piece.WestConnection);
 			}
@@ -123,12 +123,12 @@ namespace Puzzler.Controls
 
 		private static readonly double[] CURVE = new double[]
 		{
-			0,  0,   35, 15,  37,  5,
-			37, 5,   40, 0,   38,  -5,
-			38, -5,  20, -20, 50,  -20,
-			50, -20, 80, -20, 62,  -5,
-			62, -5,  60, 0,   63,  5,
-			63, 5,   65, 15,  100, 0
+			0,    0,    17.5, 7.5, 18.5, 2.5,
+			18.5, 2.5,  20,   0,   19,   -2.5,
+			19,   -2.5, 10,   -10, 25,   -10,
+			25,   -10,  40,   -10, 31,   -2.5,
+			31,   -2.5, 30,   0,   31.5, 2.5,
+			31.5, 2.5,  32.5, 7.5, 50,   0,
 		};
 
 		#endregion

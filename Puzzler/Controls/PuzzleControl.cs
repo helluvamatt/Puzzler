@@ -14,7 +14,7 @@ namespace Puzzler.Controls
 {
 	public class PuzzleControl : Border
 	{
-		private const double SnapDistance = 10.0; // "board" pixels where a piece is 100 pixels wide, actual render pixels are dependent on the Zoom
+		private const double SnapDistance = 10.0; // "board" pixels where a piece is 50 pixels wide, actual render pixels are dependent on the Zoom
 
 		private readonly ScaleTransform _ZoomTransform;
 		private readonly Canvas _Canvas;
@@ -86,8 +86,8 @@ namespace Puzzler.Controls
 
 		#region Zoom property
 
-		public const double MinZoom = 0.1;
-		public const double MaxZoom = 1.0;
+		public const double MinZoom = 0.5;
+		public const double MaxZoom = 2.0;
 
 		public static readonly DependencyProperty ZoomProperty = DependencyProperty.Register(nameof(Zoom), typeof(double), typeof(PuzzleControl), new PropertyMetadata(0.5, OnZoomChanged, CoerceZoom));
 
