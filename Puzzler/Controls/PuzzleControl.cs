@@ -165,11 +165,15 @@ namespace Puzzler.Controls
 		{
 			if (Pieces != null && Pieces.Any())
 			{
-				// Break all groups
-				_Groups.Clear();
-				_MovingGroup = null;
-				MoveCount = 0;
-				_IsSolved = false;
+				bool wasSolved = _IsSolved;
+				if (wasSolved)
+				{
+					// Break all groups
+					_Groups.Clear();
+					_MovingGroup = null;
+					MoveCount = 0;
+					_IsSolved = false;
+				}
 
 				int maxX = Pieces.Max(p => p.X);
 				int maxY = Pieces.Max(p => p.Y);
@@ -188,10 +192,10 @@ namespace Puzzler.Controls
 				storyboard.Completed += (_, __) =>
 				{
 					_IsAnimating = false;
-					PuzzleController?.OnPuzzleRandomized();
+					PuzzleController?.OnPuzzleRandomized(wasSolved);
 				};
 
-				foreach (PuzzlePieceControl ppc in _Canvas.Children.OfType<PuzzlePieceControl>())
+				foreach (PuzzlePieceControl ppc in _Canvas.Children.OfType<PuzzlePieceControl>().Where(ppc => !_Groups.Any(g => g.Pieces.Contains(ppc))))
 				{
 					// Random location for the piece
 					x = _Random.NextDouble() * maxXPos;

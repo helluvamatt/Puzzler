@@ -7,7 +7,7 @@ namespace Puzzler.ViewModels
 		event EventHandler SolvePuzzle;
 		event EventHandler RandomizePuzzle;
 
-		void OnPuzzleRandomized();
+		void OnPuzzleRandomized(bool wasSolved);
 		void OnPuzzleCompleted(bool autoSolved, int moveCount);
 	}
 }

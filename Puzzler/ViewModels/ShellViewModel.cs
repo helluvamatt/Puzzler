@@ -211,9 +211,9 @@ namespace Puzzler.ViewModels
 		public event EventHandler SolvePuzzle;
 		public event EventHandler RandomizePuzzle;
 
-		public void OnPuzzleRandomized()
+		public void OnPuzzleRandomized(bool wasSolved)
 		{
-			ResetTimer();
+			if (wasSolved) ResetTimer();
 		}
 
 		public void OnPuzzleCompleted(bool autoSolved, int moveCount)
@@ -224,7 +224,6 @@ namespace Puzzler.ViewModels
 			_TimerStart = null;
 
 			// Show completed message and statistics
-			string statistics = null;
 			if (!autoSolved)
 			{
 				int moves = MoveCount;
@@ -236,9 +235,9 @@ namespace Puzzler.ViewModels
 				statisticsBuilder.AppendLine($"Move Count:         {moves}");
 				statisticsBuilder.AppendLine($"Total Time:         {time}");
 				statisticsBuilder.AppendLine($"Avg. Moves / Piece: {avgMovesPerPiece}");
-				statistics = statisticsBuilder.ToString().TrimEnd();
+
+				_DialogService.ShowMessageBox("Complete!", "You have completed the puzzle!", MessageBoxType.Info, statisticsBuilder.ToString().TrimEnd());
 			}
-			_DialogService.ShowMessageBox("Complete!", "You have completed the puzzle!", MessageBoxType.Info, statistics);
 		}
 
 		#endregion
@@ -411,7 +410,6 @@ namespace Puzzler.ViewModels
 
 		private void OnRandomizePuzzle()
 		{
-			ClearTimer();
 			RandomizePuzzle?.Invoke(this, EventArgs.Empty);
 		}
 
