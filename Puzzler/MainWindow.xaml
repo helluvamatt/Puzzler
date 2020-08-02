@@ -94,7 +94,7 @@
 	</mah:MetroWindow.RightWindowCommands>
 	<mah:MetroWindow.Flyouts>
 		<mah:FlyoutsControl>
-			<mah:Flyout Header="Settings" Position="Right" Width="300" Theme="Light" IsOpen="{Binding IsSettingsFlyoutOpen}">
+			<mah:Flyout Header="Settings" Position="Right" Width="300" Theme="Light" IsModal="True" IsOpen="{Binding IsSettingsFlyoutOpen}">
 				<ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
 					<StackPanel Orientation="Vertical" Margin="4">
 						<Label Margin="-2,4,4,-4">Puzzle Background</Label>

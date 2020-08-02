@@ -194,7 +194,7 @@ namespace Puzzler.ViewModels
 
 		#region TimerDisplay
 
-		public static readonly DependencyProperty TimerDisplayProperty = DependencyProperty.Register(nameof(TimerDisplay), typeof(string), typeof(ShellViewModel), new PropertyMetadata(null));
+		public static readonly DependencyProperty TimerDisplayProperty = DependencyProperty.Register(nameof(TimerDisplay), typeof(string), typeof(ShellViewModel), new PropertyMetadata("0:00:00"));
 
 		public string TimerDisplay
 		{
