@@ -1,0 +1,16 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+					xmlns:m="clr-namespace:Puzzler.Models">
+	<x:Array x:Key="puzzleBackgrounds" Type="{x:Type m:PuzzleBackgroundDescriptor}">
+		<m:PuzzleBackgroundDescriptor Key="00000000-0000-0000-0000-000000000000" Description="Default (Gray)">
+			<m:PuzzleBackgroundDescriptor.BackgroundBrush>
+				<SolidColorBrush Color="Gray" />
+			</m:PuzzleBackgroundDescriptor.BackgroundBrush>
+		</m:PuzzleBackgroundDescriptor>
+		<m:PuzzleBackgroundDescriptor Key="76AC3C17-B765-4094-B712-7FE7B9FB8570" Description="Green Felt">
+			<m:PuzzleBackgroundDescriptor.BackgroundBrush>
+				<ImageBrush ImageSource="green_felt.png" Viewport="0,0,512,512" ViewportUnits="Absolute" TileMode="Tile" Stretch="None" AlignmentX="Left" AlignmentY="Top" />
+			</m:PuzzleBackgroundDescriptor.BackgroundBrush>
+		</m:PuzzleBackgroundDescriptor>
+	</x:Array>
+</ResourceDictionary>
