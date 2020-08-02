@@ -62,6 +62,7 @@
     <Compile Include="Controls\PuzzlePieceControl.cs" />
     <Compile Include="Converters\FactorConverter.cs" />
     <Compile Include="Converters\NullToVisibilityConverter.cs" />
+    <Compile Include="Converters\TimestampConverter.cs" />
     <Compile Include="Models\PuzzleBackgroundDescriptor.cs" />
     <Compile Include="Models\BackgroundFillType.cs" />
     <Compile Include="Models\EnumDescriptor.cs" />
@@ -102,6 +103,7 @@
     <Compile Include="Properties\Settings.cs">
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Resource Include="Fonts\DSEG7ClassicMini-Regular.ttf" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

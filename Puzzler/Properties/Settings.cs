@@ -7,6 +7,7 @@ namespace Puzzler.Properties
 		protected override void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			Save();
+			base.OnPropertyChanged(sender, e);
 		}
 	}
 }

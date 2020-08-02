@@ -3,7 +3,9 @@ using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Win32;
 using Puzzler.Services;
 using Puzzler.ViewModels;
+using System;
 using System.Threading.Tasks;
+using System.Web.UI;
 using System.Windows;
 
 namespace Puzzler
@@ -79,6 +81,63 @@ namespace Puzzler
 				AnimateShow = false,
 			};
 			await this.HideMetroDialogAsync(_MessageDialog, dialogSettings);
+		}
+
+		public async Task<IProgressController> ShowProgressDialogAsync(string initialTitle, string initialMessage, bool initialIndeterminate = false, bool isCancelable = false)
+		{
+			var dialogSettings = new MetroDialogSettings
+			{
+				AnimateHide = false,
+				AnimateShow = false,
+			};
+			var controller = await this.ShowProgressAsync(initialTitle, initialMessage, isCancelable, dialogSettings);
+			if (initialIndeterminate) controller.SetIndeterminate();
+			return new ProgressController(controller);
+		}
+
+		private class ProgressController : IProgressController
+		{
+			private readonly ProgressDialogController _Pdc;
+
+			private double _LastProgress = 0;
+
+			public ProgressController(ProgressDialogController pdc)
+			{
+				_Pdc = pdc ?? throw new ArgumentNullException(nameof(pdc));
+			}
+
+			public event EventHandler Cancelled
+			{
+				add => _Pdc.Canceled += value;
+				remove => _Pdc.Canceled -= value;
+			}
+
+			public async void Close()
+			{
+				await _Pdc.CloseAsync();
+			}
+
+			public void SetIndeterminate(bool indeterminate)
+			{
+				if (indeterminate) _Pdc.SetIndeterminate();
+				else _Pdc.SetProgress(_LastProgress);
+			}
+
+			public void SetMessage(string message)
+			{
+				_Pdc.SetMessage(message);
+			}
+
+			public void SetProgress(double progress)
+			{
+				_Pdc.SetProgress(progress);
+				_LastProgress = progress;
+			}
+
+			public void SetTitle(string title)
+			{
+				_Pdc.SetTitle(title);
+			}
 		}
 
 		#endregion

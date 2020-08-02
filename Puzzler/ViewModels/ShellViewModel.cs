@@ -192,14 +192,14 @@ namespace Puzzler.ViewModels
 
 		#endregion
 
-		#region TimerDisplay
+		#region Timer
 
-		public static readonly DependencyProperty TimerDisplayProperty = DependencyProperty.Register(nameof(TimerDisplay), typeof(string), typeof(ShellViewModel), new PropertyMetadata("0:00:00"));
+		public static readonly DependencyProperty TimerProperty = DependencyProperty.Register(nameof(Timer), typeof(TimeSpan), typeof(ShellViewModel), new PropertyMetadata(TimeSpan.Zero));
 
-		public string TimerDisplay
+		public TimeSpan Timer
 		{
-			get => (string)GetValue(TimerDisplayProperty);
-			set => SetValue(TimerDisplayProperty, value);
+			get => (TimeSpan)GetValue(TimerProperty);
+			set => SetValue(TimerProperty, value);
 		}
 
 		#endregion
@@ -220,7 +220,7 @@ namespace Puzzler.ViewModels
 		{
 			// Stop timer
 			if (Settings.Default.ShowTimer) _Timer.Stop();
-			TimeSpan time = UpdateTimer();
+			UpdateTimer();
 			_TimerStart = null;
 
 			// Show completed message and statistics
@@ -233,7 +233,7 @@ namespace Puzzler.ViewModels
 				var statisticsBuilder = new StringBuilder();
 				statisticsBuilder.AppendLine($"Pieces Count:       {pieces}");
 				statisticsBuilder.AppendLine($"Move Count:         {moves}");
-				statisticsBuilder.AppendLine($"Total Time:         {time}");
+				statisticsBuilder.AppendLine($"Total Time:         {Timer}");
 				statisticsBuilder.AppendLine($"Avg. Moves / Piece: {avgMovesPerPiece}");
 
 				_DialogService.ShowMessageBox("Complete!", "You have completed the puzzle!", MessageBoxType.Info, statisticsBuilder.ToString().TrimEnd());
@@ -249,27 +249,57 @@ namespace Puzzler.ViewModels
 			string result = _DialogService.OpenFileDialog("Select an image...", "Image files...|*.png;*.jpg;*.jpeg;*.bmp|PNG images...|*.png|JPEG images...|*.jpeg;*.jpg|BMP images...|*.bmp|All files...|*.*");
 			if (!string.IsNullOrWhiteSpace(result))
 			{
-				try
+				Exception exception = null;
+				var controller = await _DialogService.ShowProgressDialogAsync("Loading image...", $"Loading \"{result}\"...", true);
+				PreviewImage = await Task.Run<BitmapSource>(() =>
 				{
-					PreviewImage = await Task.Run(() =>
+					try
 					{
-						var img = new BitmapImage();
+						// Load original image
+						var rawImage = new BitmapImage();
 						using (var fileStream = new FileStream(result, FileMode.Open, FileAccess.Read))
 						{
-							img.BeginInit();
-							img.StreamSource = fileStream;
-							img.CacheOption = BitmapCacheOption.OnLoad;
-							img.EndInit();
-							img.Freeze();
+							rawImage.BeginInit();
+							rawImage.StreamSource = fileStream;
+							rawImage.CacheOption = BitmapCacheOption.OnLoad;
+							rawImage.EndInit();
+							rawImage.Freeze();
 						}
-						return img;
-					});
+
+						// If the DPI is 96, we can use the image directly
+						if (rawImage.DpiX == 96 && rawImage.DpiY == 96) return rawImage;
+
+						// Otherwise, it needs to be converted
+						var drawingVisual = new DrawingVisual();
+						var imageBounds = new Rect(0, 0, rawImage.PixelWidth, rawImage.PixelHeight);
+						using (var drawingContext = drawingVisual.RenderOpen())
+						{
+							drawingContext.PushClip(new RectangleGeometry(imageBounds));
+							drawingContext.DrawImage(rawImage, imageBounds);
+							drawingContext.Pop();
+						}
+						var rtb = new RenderTargetBitmap(rawImage.PixelWidth, rawImage.PixelHeight, 96, 96, PixelFormats.Pbgra32);
+						rtb.Render(drawingVisual);
+						rtb.Freeze();
+						return rtb;
+					}
+					catch (Exception ex)
+					{
+						exception = ex;
+						return null;
+					}
+				});
+
+				controller.Close();
+
+				if (exception != null)
+				{
+					_DialogService.ShowMessageBox("Failed to load image...", exception.Message, MessageBoxType.Error, exception.ToString());
+				}
+				else
+				{
 					CurrentImageSource = result;
 					CommandManager.InvalidateRequerySuggested();
-				}
-				catch (Exception ex)
-				{
-					_DialogService.ShowMessageBox("Failed to load image...", ex.ToString(), MessageBoxType.Error);
 				}
 			}
 		}
@@ -430,32 +460,16 @@ namespace Puzzler.ViewModels
 
 		#region Timer
 
-		private void ClearTimer()
-		{
-			if (Settings.Default.ShowTimer) _Timer.Stop();
-			_TimerStart = null;
-			UpdateTimer();
-		}
-
 		private void ResetTimer()
 		{
 			_TimerStart = DateTime.Now;
 			if (Settings.Default.ShowTimer) _Timer.Start();
 		}
 
-		private TimeSpan UpdateTimer()
+		private void UpdateTimer()
 		{
-			if (_TimerStart.HasValue)
-			{
-				var time = DateTime.Now - _TimerStart.Value;
-				TimerDisplay = $"{Math.Floor(time.TotalHours)}:{time.Minutes:00}:{time.Seconds:00}";
-				return time;
-			}
-			else
-			{
-				TimerDisplay = "0:00:00";
-				return TimeSpan.Zero;
-			}
+			if (_TimerStart.HasValue) Timer = DateTime.Now - _TimerStart.Value;
+			else Timer = TimeSpan.Zero;
 		}
 
 		#endregion

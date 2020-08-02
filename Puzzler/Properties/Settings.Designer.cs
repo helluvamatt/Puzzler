@@ -82,5 +82,17 @@ namespace Puzzler.Properties {
                 this["ShowTimer"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ShowMoves {
+            get {
+                return ((bool)(this["ShowMoves"]));
+            }
+            set {
+                this["ShowMoves"] = value;
+            }
+        }
     }
 }
