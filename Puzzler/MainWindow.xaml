@@ -280,9 +280,9 @@
 			</Grid>
 			<ScrollViewer Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
 						  VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
-						  HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible"
+						  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
 						  Background="{Binding PuzzleBackground.BackgroundBrush}">
-				<c:PuzzleControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+				<c:PuzzleControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="8"
 								 Pieces="{Binding Pieces}"
 								 Image="{Binding PuzzleImage}"
 								 Zoom="{Binding Zoom}"

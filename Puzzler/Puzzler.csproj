@@ -39,13 +39,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
@@ -68,6 +63,7 @@
     <Compile Include="Models\EnumDescriptor.cs" />
     <Compile Include="Models\Int32SizeDescriptor.cs" />
     <Compile Include="Models\Piece.cs" />
+    <Compile Include="Services\Animator.cs" />
     <Compile Include="Services\IDialogService.cs" />
     <Compile Include="Services\IWindowResourceService.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />

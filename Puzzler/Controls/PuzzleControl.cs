@@ -1,28 +1,27 @@
 ﻿using Puzzler.Models;
+using Puzzler.Services;
 using Puzzler.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 
 namespace Puzzler.Controls
 {
-	public class PuzzleControl : Border
+	public class PuzzleControl : FrameworkElement
 	{
 		private const double SnapDistance = 10.0; // "board" pixels where a piece is 50 pixels wide, actual render pixels are dependent on the Zoom
 
-		private readonly ScaleTransform _ZoomTransform;
-		private readonly Canvas _Canvas;
 		private readonly Random _Random;
 		private readonly List<PieceGroup> _Groups;
+		private readonly List<PuzzlePieceControl> _Pieces;
 
 		private Point? _InitialPoint = null;
 		private PieceGroup _MovingGroup = null;
+		private PuzzlePieceControl _MovingPiece = null;
 		private int _MaxX = 0;
 		private int _MaxY = 0;
 		private int _MaxSizeX = 0;
@@ -32,18 +31,9 @@ namespace Puzzler.Controls
 
 		public PuzzleControl()
 		{
-			_ZoomTransform = new ScaleTransform(1, 1);
-
-			double canvasPadding = (PuzzlePieceControl.TabSize + 3) * Zoom;
-			Child = _Canvas = new Canvas()
-			{
-				Margin = new Thickness(canvasPadding),
-				HorizontalAlignment = HorizontalAlignment.Stretch,
-				VerticalAlignment = VerticalAlignment.Stretch,
-			};
-
 			_Random = new Random();
 			_Groups = new List<PieceGroup>();
+			_Pieces = new List<PuzzlePieceControl>();
 		}
 
 		#region Dependency properties
@@ -61,7 +51,7 @@ namespace Puzzler.Controls
 		private static void OnImageChanged(DependencyObject owner, DependencyPropertyChangedEventArgs e)
 		{
 			var pc = (PuzzleControl)owner;
-			pc.UpdateImage();
+			pc.BindPieces();
 		}
 
 		#endregion
@@ -141,8 +131,6 @@ namespace Puzzler.Controls
 			}
 		}
 
-
-
 		#endregion
 
 		#region MoveCount property
@@ -156,6 +144,156 @@ namespace Puzzler.Controls
 		}
 
 		#endregion
+
+		#endregion
+
+		#region Control overrides
+
+		protected override HitTestResult HitTestCore(PointHitTestParameters hitTestParameters)
+		{
+			return new PointHitTestResult(this, hitTestParameters.HitPoint);
+		}
+
+		protected override void OnQueryCursor(QueryCursorEventArgs e)
+		{
+			if (_Pieces.Any(ppc => ppc.HitTest(e.GetPosition(this))))
+			{
+				e.Cursor = Cursors.Hand;
+				e.Handled = true;
+			}
+			base.OnQueryCursor(e);
+		}
+
+		protected override void OnMouseDown(MouseButtonEventArgs e)
+		{
+			if (_IsAnimating)
+			{
+				e.Handled = true;
+			}
+			else if (e.LeftButton == MouseButtonState.Pressed)
+			{
+				var pt = e.GetPosition(this);
+				_MovingPiece = _Pieces.LastOrDefault(ppc => ppc.HitTest(pt));
+				if (_MovingPiece != null)
+				{
+					_MovingGroup = FindGroup(_MovingPiece);
+
+					if (_MovingGroup != null) BringToTop(_MovingGroup.Pieces);
+					else BringToTop(_MovingPiece);
+
+					CaptureMouse();
+					_InitialPoint = pt;
+
+					e.Handled = true;
+				}
+			}
+			base.OnMouseDown(e);
+		}
+
+		protected override void OnMouseMove(MouseEventArgs e)
+		{
+			if (_IsAnimating)
+			{
+				e.Handled = true;
+			}
+			else if (_MovingPiece != null && e.LeftButton == MouseButtonState.Pressed && _InitialPoint.HasValue)
+			{
+				var pt = e.GetPosition(this);
+				double dX = (pt.X - _InitialPoint.Value.X) / Zoom;
+				double dY = (pt.Y - _InitialPoint.Value.Y) / Zoom;
+
+				double canvasWidth = ActualWidth / Zoom;
+				double canvasHeight = ActualHeight / Zoom;
+
+				double x, y, originalX, originalY, movingItemWidth, movingItemHeight;
+
+				if (_MovingGroup != null)
+				{
+					Rect bounds = _MovingGroup.Bounds;
+					originalX = x = bounds.X;
+					originalY = y = bounds.Y;
+					movingItemWidth = bounds.Width;
+					movingItemHeight = bounds.Height;
+				}
+				else
+				{
+					var pos = _MovingPiece.Position;
+					originalX = x = pos.X;
+					originalY = y = pos.Y;
+					movingItemWidth = PuzzlePieceControl.GridSize;
+					movingItemHeight = PuzzlePieceControl.GridSize;
+				}
+
+				// Move the coords
+				x += dX;
+				y += dY;
+
+				// Work within the bounds of the canvas
+				if (x < 0) x = 0;
+				if (x > canvasWidth - movingItemWidth) x = canvasWidth - movingItemWidth;
+				if (y < 0) y = 0;
+				if (y > canvasHeight - movingItemHeight) y = canvasHeight - movingItemHeight;
+
+				// How much delta should we add to _InitialPoint:
+				double dpX = (x - originalX) * Zoom;
+				double dpY = (y - originalY) * Zoom;
+				double pX = _InitialPoint.Value.X + dpX;
+				double pY = _InitialPoint.Value.Y + dpY;
+				_InitialPoint = new Point(pX, pY);
+
+				if (_MovingGroup != null)
+				{
+					_MovingGroup.SetGroupOrigin(x, y);
+				}
+				else
+				{
+					_MovingPiece.Position = new Point(x, y);
+				}
+				InvalidateVisual();
+
+				e.Handled = true;
+			}
+			base.OnMouseMove(e);
+		}
+
+		protected override void OnMouseUp(MouseButtonEventArgs e)
+		{
+			if (_IsAnimating)
+			{
+				e.Handled = true;
+			}
+			else if (_MovingPiece != null)
+			{
+				CheckLinks(_MovingPiece, _MovingGroup);
+
+				ReleaseMouseCapture();
+
+				_InitialPoint = null;
+				_MovingGroup = null;
+
+				if (!_IsSolved)
+				{
+					MoveCount++;
+
+					if (CheckSolution())
+					{
+						_IsSolved = true;
+						PuzzleController?.OnPuzzleCompleted(false, MoveCount);
+					}
+				}
+
+				e.Handled = true;
+			}
+			base.OnMouseUp(e);
+		}
+
+		protected override void OnRender(DrawingContext drawingContext)
+		{
+			foreach (var ppc in _Pieces)
+			{
+				ppc.Render(drawingContext);
+			}
+		}
 
 		#endregion
 
@@ -182,44 +320,24 @@ namespace Puzzler.Controls
 				double maxXPos = (maxX + 2) * PuzzlePieceControl.GridSize;
 				double maxYPos = (maxY + 2) * PuzzlePieceControl.GridSize;
 
-				double x, y;
-
-				Storyboard storyboard = new Storyboard
-				{
-					Duration = TimeSpan.FromMilliseconds(500),
-					FillBehavior = FillBehavior.Stop,
-				};
-				storyboard.Completed += (_, __) =>
+				var animator = new Animator(TimeSpan.FromMilliseconds(500), InvalidateVisual);
+				animator.Completed += (_, __) =>
 				{
 					_IsAnimating = false;
 					PuzzleController?.OnPuzzleRandomized(wasSolved);
 				};
 
-				foreach (PuzzlePieceControl ppc in _Canvas.Children.OfType<PuzzlePieceControl>().Where(ppc => !_Groups.Any(g => g.Pieces.Contains(ppc))))
+				foreach (PuzzlePieceControl ppc in _Pieces.Where(ppc => !_Groups.Any(g => g.Pieces.Contains(ppc))))
 				{
 					// Random location for the piece
-					x = _Random.NextDouble() * maxXPos;
-					y = _Random.NextDouble() * maxYPos;
-					ppc.Position = new Point(x, y);
+					double x = _Random.NextDouble() * maxXPos;
+					double y = _Random.NextDouble() * maxYPos;
 
-					double xTo = x * Zoom;
-					double yTo = y * Zoom;
-
-					var leftAnimator = new DoubleAnimation(xTo, storyboard.Duration, FillBehavior.Stop);
-					Storyboard.SetTarget(leftAnimator, ppc);
-					Storyboard.SetTargetProperty(leftAnimator, new PropertyPath(Canvas.LeftProperty));
-					leftAnimator.Completed += (_, __) => Canvas.SetLeft(ppc, xTo);
-					storyboard.Children.Add(leftAnimator);
-
-					var topAnimator = new DoubleAnimation(yTo, storyboard.Duration, FillBehavior.Stop);
-					Storyboard.SetTarget(topAnimator, ppc);
-					Storyboard.SetTargetProperty(topAnimator, new PropertyPath(Canvas.TopProperty));
-					topAnimator.Completed += (_, __) => Canvas.SetTop(ppc, yTo);
-					storyboard.Children.Add(topAnimator);
+					animator.AddAnimation(new PointAnimation(ppc.Position, new Point(x, y), pt => ppc.Position = pt));
 				}
 
 				_IsAnimating = true;
-				storyboard.Begin();
+				animator.Start();
 			}
 		}
 
@@ -227,167 +345,27 @@ namespace Puzzler.Controls
 		{
 			if (Pieces != null && Pieces.Any() && !_IsSolved)
 			{
-				double x, y;
-
-				Storyboard storyboard = new Storyboard
-				{
-					Duration = TimeSpan.FromMilliseconds(500),
-					FillBehavior = FillBehavior.Stop,
-				};
-				storyboard.Completed += (_, __) =>
+				var animator = new Animator(TimeSpan.FromMilliseconds(500), InvalidateVisual);
+				animator.Completed += (_, __) =>
 				{
 					_IsAnimating = false;
 					_Groups.Clear();
-					_Groups.Add(new PieceGroup(_Canvas.Children.OfType<PuzzlePieceControl>()));
+					_Groups.Add(new PieceGroup(_Pieces));
 					_IsSolved = true;
 					PuzzleController?.OnPuzzleCompleted(true, 0);
 				};
 
-				foreach (PuzzlePieceControl ppc in _Canvas.Children.OfType<PuzzlePieceControl>())
+				foreach (PuzzlePieceControl ppc in _Pieces)
 				{
 					// Solved location for the piece
-					x = ppc.X * PuzzlePieceControl.GridSize;
-					y = ppc.Y * PuzzlePieceControl.GridSize;
-					ppc.Position = new Point(x, y);
+					double x = ppc.X * PuzzlePieceControl.GridSize;
+					double y = ppc.Y * PuzzlePieceControl.GridSize;
 
-					double xTo = x * Zoom;
-					double yTo = y * Zoom;
-
-					var leftAnimator = new DoubleAnimation(xTo, storyboard.Duration, FillBehavior.Stop);
-					Storyboard.SetTarget(leftAnimator, ppc);
-					Storyboard.SetTargetProperty(leftAnimator, new PropertyPath(Canvas.LeftProperty));
-					leftAnimator.Completed += (_, __) => Canvas.SetLeft(ppc, xTo);
-					storyboard.Children.Add(leftAnimator);
-
-					var topAnimator = new DoubleAnimation(yTo, storyboard.Duration, FillBehavior.Stop);
-					Storyboard.SetTarget(topAnimator, ppc);
-					Storyboard.SetTargetProperty(topAnimator, new PropertyPath(Canvas.TopProperty));
-					topAnimator.Completed += (_, __) => Canvas.SetTop(ppc, yTo);
-					storyboard.Children.Add(topAnimator);
+					animator.AddAnimation(new PointAnimation(ppc.Position, new Point(x, y), pt => ppc.Position = pt));
 				}
 
 				_IsAnimating = true;
-				storyboard.Begin();
-			}
-		}
-
-		private void OnPieceMouseDown(object sender, MouseButtonEventArgs e)
-		{
-			if (_IsAnimating)
-			{
-				e.Handled = true;
-				return;
-			}
-
-			if (sender is PuzzlePieceControl ppc && e.LeftButton == MouseButtonState.Pressed)
-			{
-				_MovingGroup = FindGroup(ppc);
-
-				if (_MovingGroup != null) BringToTop(_MovingGroup.Pieces);
-				else BringToTop(ppc);
-
-				ppc.CaptureMouse();
-				_InitialPoint = e.GetPosition(this);
-
-				e.Handled = true;
-			}
-		}
-
-		private void OnPieceMouseMove(object sender, MouseEventArgs e)
-		{
-			if (_IsAnimating)
-			{
-				e.Handled = true;
-				return;
-			}
-
-			if (sender is PuzzlePieceControl ppc && e.LeftButton == MouseButtonState.Pressed && _InitialPoint.HasValue)
-			{
-				var pt = e.GetPosition(this);
-				double dX = (pt.X - _InitialPoint.Value.X) / Zoom;
-				double dY = (pt.Y - _InitialPoint.Value.Y) / Zoom;
-
-				double canvasWidth = _Canvas.ActualWidth / Zoom;
-				double canvasHeight = _Canvas.ActualHeight / Zoom;
-
-				double x, y, originalX, originalY, movingItemWidth, movingItemHeight;
-
-				if (_MovingGroup != null)
-				{
-					Rect bounds = _MovingGroup.Bounds;
-					originalX = x = bounds.X;
-					originalY = y = bounds.Y;
-					movingItemWidth = bounds.Width;
-					movingItemHeight = bounds.Height;
-				}
-				else
-				{
-					originalX = x = ppc.Position.X;
-					originalY = y = ppc.Position.Y;
-					movingItemWidth = ppc.ActualWidth;
-					movingItemHeight = ppc.ActualHeight;
-				}
-
-				// Move the coords
-				x += dX;
-				y += dY;
-
-				// Work within the bounds of the canvas
-				if (x < 0) x = 0;
-				if (x > canvasWidth - movingItemWidth) x = canvasWidth - movingItemWidth;
-				if (y < 0) y = 0;
-				if (y > canvasHeight - movingItemHeight) y = canvasHeight - movingItemHeight;
-
-				// How much delta should we add to _InitialPoint:
-				double dpX = (x - originalX) * Zoom;
-				double dpY = (y - originalY) * Zoom;
-				double pX = _InitialPoint.Value.X + dpX;
-				double pY = _InitialPoint.Value.Y + dpY;
-				_InitialPoint = new Point(pX, pY);
-
-				if (_MovingGroup != null)
-				{
-					_MovingGroup.SetGroupOrigin(x, y, UpdatePosition);
-				}
-				else
-				{
-					ppc.Position = new Point(x, y);
-					UpdatePosition(ppc);
-				}
-				
-				e.Handled = true;
-			}
-		}
-
-		private void OnPieceMouseUp(object sender, MouseButtonEventArgs e)
-		{
-			if (_IsAnimating)
-			{
-				e.Handled = true;
-				return;
-			}
-
-			if (sender is PuzzlePieceControl ppc)
-			{
-				CheckLinks(ppc, _MovingGroup);
-				
-				ppc.ReleaseMouseCapture();
-				
-				_InitialPoint = null;
-				_MovingGroup = null;
-
-				if (!_IsSolved)
-				{
-					MoveCount++;
-
-					if (CheckSolution())
-					{
-						_IsSolved = true;
-						PuzzleController?.OnPuzzleCompleted(false, MoveCount);
-					}
-				}
-				
-				e.Handled = true;
+				animator.Start();
 			}
 		}
 
@@ -404,10 +382,10 @@ namespace Puzzler.Controls
 			_IsSolved = false;
 
 			// Remove all pieces
-			_Canvas.Children.Clear();
+			_Pieces.Clear();
 
 			// Add all items in the collection
-			if (Pieces != null && Pieces.Any())
+			if (Pieces != null && Pieces.Any() && Image != null)
 			{
 				_MaxX = Pieces.Max(p => p.X);
 				_MaxY = Pieces.Max(p => p.Y);
@@ -428,17 +406,11 @@ namespace Puzzler.Controls
 					x = _Random.NextDouble() * maxXPos;
 					y = _Random.NextDouble() * maxYPos;
 
-					var pc = new PuzzlePieceControl(piece)
+					var pc = new PuzzlePieceControl(piece, Image)
 					{
-						Image = Image,
-						RenderTransform = _ZoomTransform,
 						Position = new Point(x, y),
 					};
-					pc.MouseDown += OnPieceMouseDown;
-					pc.MouseMove += OnPieceMouseMove;
-					pc.MouseUp += OnPieceMouseUp;
-					_Canvas.Children.Add(pc);
-					Panel.SetZIndex(pc, _Canvas.Children.Count);
+					_Pieces.Add(pc);
 				}
 			}
 			else
@@ -453,32 +425,15 @@ namespace Puzzler.Controls
 			UpdateBounds();
 		}
 
-		private void UpdateImage()
-		{
-			foreach (var pieceControl in _Canvas.Children.OfType<PuzzlePieceControl>())
-			{
-				pieceControl.Image = Image;
-			}
-			UpdateBounds();
-		}
-
 		private void UpdateBounds()
 		{
-			_ZoomTransform.ScaleX = _ZoomTransform.ScaleY = Zoom;
-			foreach (var ppc in _Canvas.Children.OfType<PuzzlePieceControl>())
+			foreach (var ppc in _Pieces)
 			{
-				UpdatePosition(ppc);
+				ppc.Zoom = Zoom;
 			}
-			double canvasPadding = (PuzzlePieceControl.TabSize + 3) * Zoom;
-			_Canvas.Margin = new Thickness(canvasPadding);
-			MinWidth = _MaxSizeX * Zoom + _Canvas.Margin.Left + _Canvas.Margin.Right;
-			MinHeight = _MaxSizeY * Zoom + _Canvas.Margin.Top + _Canvas.Margin.Bottom;
-		}
-
-		private void UpdatePosition(PuzzlePieceControl ppc)
-		{
-			Canvas.SetLeft(ppc, ppc.Position.X * Zoom);
-			Canvas.SetTop(ppc, ppc.Position.Y * Zoom);
+			MinWidth = _MaxSizeX * Zoom;
+			MinHeight = _MaxSizeY * Zoom;
+			InvalidateVisual();
 		}
 
 		private void BringToTop(PuzzlePieceControl el)
@@ -489,15 +444,11 @@ namespace Puzzler.Controls
 		private void BringToTop(IEnumerable<PuzzlePieceControl> els)
 		{
 			// Recompute all children ZIndex
-			int zIndex = 1;
-			foreach (PuzzlePieceControl ppc in _Canvas.Children.OfType<PuzzlePieceControl>().Except(els))
-			{
-				Panel.SetZIndex(ppc, zIndex++);
-			}
-			foreach (PuzzlePieceControl ppc in els)
-			{
-				Panel.SetZIndex(ppc, zIndex++);
-			}
+			var pieces = new List<PuzzlePieceControl>(_Pieces.Except(els));
+			pieces.AddRange(els);
+			_Pieces.Clear();
+			_Pieces.AddRange(pieces);
+			InvalidateVisual();
 		}
 
 		private PieceGroup FindGroup(PuzzlePieceControl ppc)
@@ -507,7 +458,7 @@ namespace Puzzler.Controls
 
 		private PuzzlePieceControl FindPiece(int x, int y)
 		{
-			return _Canvas.Children.OfType<PuzzlePieceControl>().FirstOrDefault(ppc => ppc.X == x && ppc.Y == y);
+			return _Pieces.FirstOrDefault(ppc => ppc.X == x && ppc.Y == y);
 		}
 
 		private void CheckLinks(PuzzlePieceControl movedPiece, PieceGroup movedGroup)
@@ -571,7 +522,6 @@ namespace Puzzler.Controls
 				else
 				{
 					neighborGroup.AddPiece(movedPiece);
-					UpdatePosition(movedPiece);
 				}
 			}
 			else
@@ -579,16 +529,15 @@ namespace Puzzler.Controls
 				if (movedGroup != null)
 				{
 					movedGroup.AddPiece(neighbor);
-					UpdatePosition(neighbor);
 				}
 				else
 				{
 					var g = new PieceGroup(neighbor);
 					g.AddPiece(movedPiece);
-					UpdatePosition(movedPiece);
 					_Groups.Add(g);
 				}
 			}
+			InvalidateVisual();
 		}
 
 		private void MergeGroups(PieceGroup group, PieceGroup neighborGroup)
@@ -597,10 +546,6 @@ namespace Puzzler.Controls
 
 			neighborGroup.MergeWith(group);
 			_Groups.Remove(group);
-			foreach (var piece in group.Pieces)
-			{
-				UpdatePosition(piece);
-			}
 		}
 
 		private bool CheckSolution()
@@ -609,7 +554,7 @@ namespace Puzzler.Controls
 			if (_Groups.Count != 1) return false;
 
 			// ... with all the pieces
-			if (_Canvas.Children.OfType<PuzzlePieceControl>().Except(_Groups[0].Pieces).Any()) return false;
+			if (_Pieces.Except(_Groups[0].Pieces).Any()) return false;
 
 			// Solved!
 			return true;
@@ -655,7 +600,7 @@ namespace Puzzler.Controls
 				ComputeBounds();
 			}
 
-			public void SetGroupOrigin(double newOriginX, double newOriginY, Action<PuzzlePieceControl> moveCallback)
+			public void SetGroupOrigin(double newOriginX, double newOriginY)
 			{
 				double oldOriginX = Bounds.X;
 				double oldOriginY = Bounds.Y;
@@ -665,7 +610,6 @@ namespace Puzzler.Controls
 					pieceX = groupItem.Position.X - oldOriginX + newOriginX;
 					pieceY = groupItem.Position.Y - oldOriginY + newOriginY;
 					groupItem.Position = new Point(pieceX, pieceY);
-					moveCallback.Invoke(groupItem);
 				}
 				ComputeBounds();
 			}

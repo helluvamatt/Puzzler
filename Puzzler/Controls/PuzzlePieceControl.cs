@@ -8,83 +8,102 @@ using System.Windows.Media.Imaging;
 
 namespace Puzzler.Controls
 {
-	public class PuzzlePieceControl : FrameworkElement, IComparable<PuzzlePieceControl>
+	public class PuzzlePieceControl : IComparable<PuzzlePieceControl>
 	{
 		public const int PieceSize = 70;
 		public const int GridSize = 50;
 		public const int TabSize = 10;
+		private readonly ScaleTransform _ZoomTransform;
+		private readonly TransformGroup _Transform;
+		private readonly Geometry _Geometry;
+		private readonly Geometry _TransformedGeometry;
+		private readonly Pen _Pen;
+		private readonly Brush _Fill;
 
-		private BitmapSource _Image;
-		private Geometry _Geometry;
-		private Pen _Pen;
-		private Brush _Fill;
-
-		public PuzzlePieceControl(Piece piece)
+		public PuzzlePieceControl(Piece piece, BitmapSource image)
 		{
+			PositionTransform = new TranslateTransform(0, 0);
+			_ZoomTransform = new ScaleTransform(1, 1);
 			Piece = piece ?? throw new ArgumentNullException(nameof(piece));
-			Width = Height = GridSize;
-			ClipToBounds = false;
-			Cursor = Cursors.Hand;
+
+			var imageRegion = new Int32Rect(Piece.X * GridSize - TabSize, Piece.Y * GridSize - TabSize, PieceSize, PieceSize);
+			var drawRect = new Rect(-imageRegion.X, -imageRegion.Y, image.Width, image.Height);
+
+			var drawingVisual = new DrawingVisual();
+			using (var drawingContext = drawingVisual.RenderOpen())
+			{
+				drawingContext.PushClip(new RectangleGeometry(new Rect(0, 0, imageRegion.Width, imageRegion.Height)));
+				drawingContext.DrawImage(image, drawRect);
+				drawingContext.Pop();
+			}
+			var cropped = new RenderTargetBitmap(imageRegion.Width, imageRegion.Height, 96, 96, PixelFormats.Pbgra32);
+			cropped.Render(drawingVisual);
+			cropped.Freeze();
+			_Fill = new ImageBrush
+			{
+				ImageSource = cropped,
+				Viewport = new Rect(-TabSize, -TabSize, PieceSize, PieceSize),
+				ViewportUnits = BrushMappingMode.Absolute,
+			};
+			_Fill.Freeze();
+			_Pen = new Pen
+			{
+				Brush = new SolidColorBrush(Colors.Black),
+				LineJoin = PenLineJoin.Round,
+				Thickness = 1,
+			};
+			_Pen.Freeze();
+			_Geometry = GetPathGeometry(Piece.NorthConnection, Piece.SouthConnection, Piece.EastConnection, Piece.WestConnection);
+			_Geometry.Freeze();
+			_TransformedGeometry = _Geometry.Clone();
+			_TransformedGeometry.Transform = _Transform = new TransformGroup
+			{
+				Children = new TransformCollection
+				{
+					PositionTransform,
+					_ZoomTransform
+				},
+			};
 		}
 
 		public Piece Piece { get; }
 		public int X => Piece.X;
 		public int Y => Piece.Y;
 
-		public Point Position { get; set; }
-
-		public BitmapSource Image
+		public double Zoom
 		{
-			get => _Image;
+			get => _ZoomTransform.ScaleX;
 			set
 			{
-				_Image = value;
-				BindPiece();
+				_ZoomTransform.ScaleX = _ZoomTransform.ScaleY = value;
 			}
 		}
 
-		#region Control overrides
-
-		protected override void OnRender(DrawingContext drawingContext)
+		public Point Position
 		{
-			if (_Fill != null && _Pen != null && _Geometry != null)
+			get => new Point(PositionTransform.X, PositionTransform.Y);
+			set
 			{
-				drawingContext.DrawGeometry(_Fill, _Pen, _Geometry);
+				PositionTransform.X = value.X;
+				PositionTransform.Y = value.Y;
 			}
 		}
 
-		#endregion
+		public TranslateTransform PositionTransform { get; }
+
+		public void Render(DrawingContext drawingContext)
+		{
+			drawingContext.PushTransform(_Transform);
+			drawingContext.DrawGeometry(_Fill, _Pen, _Geometry);
+			drawingContext.Pop();
+		}
+
+		public bool HitTest(Point hitPoint)
+		{
+			return _TransformedGeometry.FillContains(hitPoint);
+		}
 
 		#region Private members
-
-		private void BindPiece()
-		{
-			if (_Image != null)
-			{
-				_Fill = new ImageBrush
-				{
-					ImageSource = _Image,
-					Viewport = new Rect(-TabSize, -TabSize, PieceSize, PieceSize),
-					ViewportUnits = BrushMappingMode.Absolute,
-					Viewbox = new Rect(Piece.X * GridSize - TabSize, Piece.Y * GridSize - TabSize, PieceSize, PieceSize),
-					ViewboxUnits = BrushMappingMode.Absolute,
-				};
-				_Pen = new Pen
-				{
-					Brush = new SolidColorBrush(Colors.Black),
-					LineJoin = PenLineJoin.Round,
-					Thickness = 1,
-				};
-				_Geometry = GetPathGeometry(Piece.NorthConnection, Piece.SouthConnection, Piece.EastConnection, Piece.WestConnection);
-			}
-			else
-			{
-				_Fill = null;
-				_Pen = null;
-				_Geometry = null;
-			}
-			InvalidateVisual();
-		}
 
 		private static PathGeometry GetPathGeometry(ConnectionType north, ConnectionType south, ConnectionType east, ConnectionType west)
 		{
