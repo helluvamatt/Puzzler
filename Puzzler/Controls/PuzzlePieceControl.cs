@@ -10,60 +10,76 @@ namespace Puzzler.Controls
 {
 	public class PuzzlePieceControl : IComparable<PuzzlePieceControl>
 	{
-		public const int PieceSize = 70;
-		public const int GridSize = 50;
-		public const int TabSize = 10;
+		public const int PieceSize = 140;
+		public const int GridSize = 100;
+		public const int TabSize = 20;
+		private const int Padding = 2;
+
+		private readonly TranslateTransform _PositionTransform;
 		private readonly ScaleTransform _ZoomTransform;
 		private readonly TransformGroup _Transform;
-		private readonly Geometry _Geometry;
 		private readonly Geometry _TransformedGeometry;
-		private readonly Pen _Pen;
-		private readonly Brush _Fill;
+		private readonly BitmapSource _Image;
 
 		public PuzzlePieceControl(Piece piece, BitmapSource image)
 		{
-			PositionTransform = new TranslateTransform(0, 0);
+			_PositionTransform = new TranslateTransform(-TabSize, -TabSize);
 			_ZoomTransform = new ScaleTransform(1, 1);
 			Piece = piece ?? throw new ArgumentNullException(nameof(piece));
 
+			// Outline of the puzzle piece
+			var pen = new Pen
+			{
+				Brush = new SolidColorBrush(Colors.Black),
+				LineJoin = PenLineJoin.Round,
+				Thickness = 1,
+			};
+
+			// Geometric shape of the puzzle piece
+			var geometry = GetPathGeometry(Piece.NorthConnection, Piece.SouthConnection, Piece.EastConnection, Piece.WestConnection);
+
+			// Transformed geometric shape for hit testing
+			_TransformedGeometry = geometry.Clone();
+			_TransformedGeometry.Transform = _Transform = new TransformGroup
+			{
+				Children = new TransformCollection
+				{
+					_PositionTransform,
+					_ZoomTransform
+				},
+			};
+
+			// Crop image from the main image
 			var imageRegion = new Int32Rect(Piece.X * GridSize - TabSize, Piece.Y * GridSize - TabSize, PieceSize, PieceSize);
 			var drawRect = new Rect(-imageRegion.X, -imageRegion.Y, image.Width, image.Height);
-
-			var drawingVisual = new DrawingVisual();
-			using (var drawingContext = drawingVisual.RenderOpen())
+			var croppedDrawingVisual = new DrawingVisual();
+			using (var drawingContext = croppedDrawingVisual.RenderOpen())
 			{
 				drawingContext.PushClip(new RectangleGeometry(new Rect(0, 0, imageRegion.Width, imageRegion.Height)));
 				drawingContext.DrawImage(image, drawRect);
 				drawingContext.Pop();
 			}
 			var cropped = new RenderTargetBitmap(imageRegion.Width, imageRegion.Height, 96, 96, PixelFormats.Pbgra32);
-			cropped.Render(drawingVisual);
-			cropped.Freeze();
-			_Fill = new ImageBrush
+			cropped.Render(croppedDrawingVisual);
+
+			// Render the final piece image
+			var fill = new ImageBrush
 			{
 				ImageSource = cropped,
 				Viewport = new Rect(-TabSize, -TabSize, PieceSize, PieceSize),
 				ViewportUnits = BrushMappingMode.Absolute,
 			};
-			_Fill.Freeze();
-			_Pen = new Pen
+			var drawingVisual = new DrawingVisual();
+			using (var drawingContext = drawingVisual.RenderOpen())
 			{
-				Brush = new SolidColorBrush(Colors.Black),
-				LineJoin = PenLineJoin.Round,
-				Thickness = 1,
-			};
-			_Pen.Freeze();
-			_Geometry = GetPathGeometry(Piece.NorthConnection, Piece.SouthConnection, Piece.EastConnection, Piece.WestConnection);
-			_Geometry.Freeze();
-			_TransformedGeometry = _Geometry.Clone();
-			_TransformedGeometry.Transform = _Transform = new TransformGroup
-			{
-				Children = new TransformCollection
-				{
-					PositionTransform,
-					_ZoomTransform
-				},
-			};
+				drawingContext.PushTransform(new TranslateTransform(TabSize + Padding, TabSize + Padding));
+				drawingContext.DrawGeometry(fill, pen, geometry);
+				drawingContext.Pop();
+			}
+			var finalImage = new RenderTargetBitmap(imageRegion.Width + Padding + Padding, imageRegion.Height + Padding + Padding, 96, 96, PixelFormats.Pbgra32);
+			finalImage.Render(drawingVisual);
+			finalImage.Freeze();
+			_Image = finalImage;
 		}
 
 		public Piece Piece { get; }
@@ -81,25 +97,25 @@ namespace Puzzler.Controls
 
 		public Point Position
 		{
-			get => new Point(PositionTransform.X, PositionTransform.Y);
+			get => new Point(_PositionTransform.X + TabSize, _PositionTransform.Y + TabSize);
 			set
 			{
-				PositionTransform.X = value.X;
-				PositionTransform.Y = value.Y;
+				_PositionTransform.X = value.X - TabSize;
+				_PositionTransform.Y = value.Y - TabSize;
 			}
 		}
-
-		public TranslateTransform PositionTransform { get; }
 
 		public void Render(DrawingContext drawingContext)
 		{
 			drawingContext.PushTransform(_Transform);
-			drawingContext.DrawGeometry(_Fill, _Pen, _Geometry);
+			drawingContext.DrawImage(_Image, new Rect(-Padding, -Padding, _Image.Width, _Image.Height));
 			drawingContext.Pop();
 		}
 
 		public bool HitTest(Point hitPoint)
 		{
+			const int offset = Padding + TabSize;
+			hitPoint.Offset(-offset, -offset);
 			return _TransformedGeometry.FillContains(hitPoint);
 		}
 
@@ -142,12 +158,12 @@ namespace Puzzler.Controls
 
 		private static readonly double[] CURVE = new double[]
 		{
-			0,    0,    17.5, 7.5, 18.5, 2.5,
-			18.5, 2.5,  20,   0,   19,   -2.5,
-			19,   -2.5, 10,   -10, 25,   -10,
-			25,   -10,  40,   -10, 31,   -2.5,
-			31,   -2.5, 30,   0,   31.5, 2.5,
-			31.5, 2.5,  32.5, 7.5, 50,   0,
+			0,  0,   35, 15,  37,  5,
+			37, 5,   40, 0,   38,  -5,
+			38, -5,  20, -20, 50,  -20,
+			50, -20, 80, -20, 62,  -5,
+			62, -5,  60, 0,   63,  5,
+			63, 5,   65, 15,  100, 0,
 		};
 
 		#endregion

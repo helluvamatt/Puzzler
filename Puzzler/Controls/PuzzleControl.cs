@@ -76,8 +76,8 @@ namespace Puzzler.Controls
 
 		#region Zoom property
 
-		public const double MinZoom = 0.5;
-		public const double MaxZoom = 2.0;
+		public const double MinZoom = 0.1;
+		public const double MaxZoom = 1.0;
 
 		public static readonly DependencyProperty ZoomProperty = DependencyProperty.Register(nameof(Zoom), typeof(double), typeof(PuzzleControl), new PropertyMetadata(0.5, OnZoomChanged, CoerceZoom));
 

@@ -282,10 +282,10 @@
 						  VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
 						  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
 						  Background="{Binding PuzzleBackground.BackgroundBrush}">
-				<c:PuzzleControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="8"
+				<c:PuzzleControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="22"
 								 Pieces="{Binding Pieces}"
 								 Image="{Binding PuzzleImage}"
-								 Zoom="{Binding Zoom}"
+								 Zoom="{Binding Zoom, Mode=TwoWay}"
 								 MoveCount="{Binding MoveCount, Mode=OneWayToSource}"
 								 PuzzleController="{Binding}" />
 			</ScrollViewer>
