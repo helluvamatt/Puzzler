@@ -355,7 +355,7 @@ namespace Puzzler.Controls
 					double x = _Random.NextDouble() * maxXPos;
 					double y = _Random.NextDouble() * maxYPos;
 
-					animator.AddAnimation(new PointAnimation(ppc.Position, new Point(x, y), pt => ppc.Position = pt));
+					animator.AddAnimation(new PointAnimation(ppc.Position, new Point(x, y), pt => ppc.Position = pt, Easings.Functions.QuadraticEaseOut));
 				}
 
 				_IsAnimating = true;
@@ -383,7 +383,7 @@ namespace Puzzler.Controls
 					double x = ppc.X * PuzzlePieceControl.GridSize;
 					double y = ppc.Y * PuzzlePieceControl.GridSize;
 
-					animator.AddAnimation(new PointAnimation(ppc.Position, new Point(x, y), pt => ppc.Position = pt));
+					animator.AddAnimation(new PointAnimation(ppc.Position, new Point(x, y), pt => ppc.Position = pt, Easings.Functions.QuadraticEaseIn));
 				}
 
 				_IsAnimating = true;
