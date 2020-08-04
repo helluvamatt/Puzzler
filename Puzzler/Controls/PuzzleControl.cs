@@ -287,6 +287,28 @@ namespace Puzzler.Controls
 			base.OnMouseUp(e);
 		}
 
+		protected override void OnPreviewMouseWheel(MouseWheelEventArgs e)
+		{
+			if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+			{
+				if (e.Delta > 0)
+				{
+					// Zoom in
+					double zoom = Zoom + 0.1;
+					if (zoom > MaxZoom) zoom = MaxZoom;
+					Zoom = zoom;
+				}
+				else if (e.Delta < 0)
+				{
+					// Zoom out
+					double zoom = Zoom - 0.1;
+					if (zoom < MinZoom) zoom = MinZoom;
+					Zoom = zoom;
+				}
+			}
+			base.OnPreviewMouseWheel(e);
+		}
+
 		protected override void OnRender(DrawingContext drawingContext)
 		{
 			foreach (var ppc in _Pieces)
