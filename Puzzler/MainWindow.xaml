@@ -278,7 +278,7 @@
 					<Button Grid.Row="7" Grid.ColumnSpan="3" Command="{Binding SolvePuzzleCommand}" Padding="16,4" Margin="4">Solve</Button>
 				</Grid>
 			</Grid>
-			<ScrollViewer Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
+			<c:PuzzleContainer Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
 						  VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
 						  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
 						  Background="{Binding PuzzleBackground.BackgroundBrush}">
@@ -288,7 +288,7 @@
 								 Zoom="{Binding Zoom, Mode=TwoWay}"
 								 MoveCount="{Binding MoveCount, Mode=OneWayToSource}"
 								 PuzzleController="{Binding}" />
-			</ScrollViewer>
+			</c:PuzzleContainer>
 		</Grid>
 	</DockPanel>
 </mah:MetroWindow>

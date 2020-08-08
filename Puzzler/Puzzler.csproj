@@ -53,6 +53,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Controls\PuzzleContainer.cs" />
     <Compile Include="Controls\PuzzleControl.cs" />
     <Compile Include="Controls\PuzzlePieceControl.cs" />
     <Compile Include="Converters\FactorConverter.cs" />
