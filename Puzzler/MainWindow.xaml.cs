@@ -4,9 +4,12 @@ using Microsoft.Win32;
 using Puzzler.Services;
 using Puzzler.ViewModels;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Web.UI;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Navigation;
 
 namespace Puzzler
 {
@@ -27,6 +30,21 @@ namespace Puzzler
 			_MessageDialog.DataContext = _MessageDialogViewModel;
 		}
 
+		private void OnFrameNavigated(object sender, NavigationEventArgs e)
+		{
+			// Sync state of Hamburger Menu
+			hamburgerMenu.IsPaneOpen = false;
+			hamburgerMenu.SelectedItem = hamburgerMenu.Items.OfType<MenuItemViewModel>().FirstOrDefault(item => item.NavigationType == e.Content.GetType());
+			hamburgerMenu.SelectedOptionsItem = hamburgerMenu.OptionsItems.OfType<MenuItemViewModel>().FirstOrDefault(item => item.NavigationType == e.Content.GetType());
+
+			// Make sure the child view gets our DataContext
+			var frame = (Frame)sender;
+			if (frame.Content is FrameworkElement content)
+			{
+				content.DataContext = DataContext;
+			}
+		}
+
 		#region IDialogService
 
 		public async Task<bool?> ShowConfirmDialogAsync(string title, string message, string affirmativeButtonText = null, string negativeButtonText = null)
@@ -41,6 +59,22 @@ namespace Puzzler
 			var result = await this.ShowMessageAsync(title, message, MessageDialogStyle.AffirmativeAndNegative, dialogSettings);
 			if (result == MessageDialogResult.Affirmative) return true;
 			if (result == MessageDialogResult.Negative) return false;
+			return null;
+		}
+
+		public string SaveFileDialog(string title, string filters)
+		{
+			var sfd = new SaveFileDialog()
+			{
+				Title = title,
+				Filter = filters,
+				OverwritePrompt = true,
+			};
+			bool? result = sfd.ShowDialog(this);
+			if (result.HasValue && result.Value)
+			{
+				return sfd.FileName;
+			}
 			return null;
 		}
 
@@ -141,5 +175,7 @@ namespace Puzzler
 		}
 
 		#endregion
+
+
 	}
 }

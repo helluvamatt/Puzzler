@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 
 namespace Puzzler.Controls
 {
@@ -15,16 +16,39 @@ namespace Puzzler.Controls
 		protected override void OnInitialized(EventArgs e)
 		{
 			base.OnInitialized(e);
-            var window = Window.GetWindow(this);
-            if (window != null)
+
+            // Try to bind the window hook now
+            if (!TryBindWindowHook())
 			{
+                // If that didn't work, we are likely in a page that hasn't loaded yet
+                // Hook the page's Loaded event and try again then
+                var page = FindParentPage(this);
+                if (page != null)
+				{
+					page.Loaded += OnPageLoaded;
+				}
+			}
+        }
+
+		private void OnPageLoaded(object sender, RoutedEventArgs e)
+		{
+            TryBindWindowHook();
+		}
+
+        private bool TryBindWindowHook()
+		{
+            var window = FindParentWindow(this);
+            if (window != null)
+            {
                 var wih = new WindowInteropHelper(window);
                 var source = HwndSource.FromHwnd(wih.EnsureHandle());
                 if (source != null)
-				{
+                {
                     source.AddHook(WndProcHook);
-				}
-			}
+                    return true;
+                }
+            }
+            return false;
         }
 
 		private void HandleMouseHorizontalWheel(IntPtr wParam)
@@ -66,5 +90,37 @@ namespace Puzzler.Controls
                 return unchecked((short)((uint)GetIntUnchecked(ptr) >> 16));
             }
         }
-    }
+
+		#region Tree-walking
+
+		private static Page FindParentPage(DependencyObject control)
+        {
+            var cur = control;
+            DependencyObject next;
+            while (cur != null)
+            {
+                if (cur is Page page) return page;
+                next = VisualTreeHelper.GetParent(cur);
+                if (next == null) next = LogicalTreeHelper.GetParent(cur);
+                cur = next;
+            }
+            return null;
+        }
+
+        private static Window FindParentWindow(DependencyObject control)
+        {
+            var cur = control;
+            DependencyObject next;
+            while (cur != null)
+            {
+                if (cur is Window window) return window;
+                next = VisualTreeHelper.GetParent(cur);
+                if (next == null) next = LogicalTreeHelper.GetParent(cur);
+                cur = next;
+            }
+            return null;
+        }
+
+		#endregion
+	}
 }

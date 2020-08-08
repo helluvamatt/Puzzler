@@ -6,10 +6,8 @@
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
 	xmlns:ic="http://metro.mahapps.com/winfx/xaml/iconpacks"
-	xmlns:c="clr-namespace:Puzzler.Controls"
 	xmlns:conv="clr-namespace:Puzzler.Converters"
-	xmlns:m="clr-namespace:Puzzler.Models"
-	xmlns:p="clr-namespace:Puzzler.Properties"
+	xmlns:v="clr-namespace:Puzzler.Views"
 	xmlns:vm="clr-namespace:Puzzler.ViewModels"
 	mc:Ignorable="d"
 	d:DataContext="{d:DesignInstance Type={x:Type vm:ShellViewModel}, IsDesignTimeCreatable=False}"
@@ -21,12 +19,7 @@
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="Backgrounds/Backgrounds.xaml" />
 			</ResourceDictionary.MergedDictionaries>
-			<Style TargetType="Label">
-				<Setter Property="FontWeight" Value="Bold" />
-			</Style>
 			<conv:NullToVisibilityConverter x:Key="nullToVisibilityConverter" />
-			<conv:FactorConverter x:Key="zoomConverter" Factor="100" />
-			<conv:TimestampConverter x:Key="timestampConverter" />
 			<mah:CustomDialog x:Key="messageDialog" Title="{Binding Title}" d:DataContext="{d:DesignInstance Type={x:Type vm:MessageDialogViewModel}, IsDesignTimeCreatable=False}">
 				<Grid Margin="4">
 					<Grid.ColumnDefinitions>
@@ -58,237 +51,71 @@
 						</ic:PackIconFontAwesome.Style>
 					</ic:PackIconFontAwesome>
 					<TextBlock Grid.Row="0" Grid.Column="1" Margin="4" Text="{Binding Message}" />
-					<Expander Grid.Row="1" Grid.Column="1" Margin="4" Header="Details"
-							  Visibility="{Binding DetailedMessage, Converter={StaticResource nullToVisibilityConverter}}">
+					<Expander Grid.Row="1" Grid.Column="1" Margin="4" Header="Details" Visibility="{Binding DetailedMessage, Converter={StaticResource nullToVisibilityConverter}}">
 						<TextBlock FontFamily="Courier New" FontSize="10pt" Margin="8" Text="{Binding DetailedMessage}" />
 					</Expander>
-					<Button Grid.Row="2" Grid.ColumnSpan="2"
-							HorizontalAlignment="Right" VerticalAlignment="Bottom"
-							Margin="4" Padding="16,4"
-							Style="{StaticResource MahApps.Styles.Button.Dialogs.Accent}"
-							Click="OnCustomDialogOKClick">OK</Button>
+					<Button Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="4" Padding="16,4" Style="{StaticResource MahApps.Styles.Button.Dialogs.Accent}" Click="OnCustomDialogOKClick">OK</Button>
 				</Grid>
 			</mah:CustomDialog>
-			<x:Array x:Key="puzzleSizes" Type="{x:Type m:Int32SizeDescriptor}">
-				<m:Int32SizeDescriptor Width="5" Height="5" />
-				<m:Int32SizeDescriptor Width="8" Height="10" />
-				<m:Int32SizeDescriptor Width="10" Height="10" />
-				<m:Int32SizeDescriptor Width="15" Height="10" />
-				<m:Int32SizeDescriptor Width="20" Height="10" />
-				<m:Int32SizeDescriptor Width="20" Height="15" />
-				<m:Int32SizeDescriptor Width="20" Height="20" />
-				<m:Int32SizeDescriptor Width="25" Height="20" />
+			<DataTemplate x:Key="MenuItemTemplate" DataType="{x:Type vm:MenuItemViewModel}">
+				<Grid Height="48">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type mah:HamburgerMenu}}, Path=CompactPaneLength, Mode=OneWay}" />
+						<ColumnDefinition />
+					</Grid.ColumnDefinitions>
+					<ContentControl Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Content="{Binding Icon}" Focusable="False" />
+					<TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="16" Text="{Binding Label}" />
+				</Grid>
+			</DataTemplate>
+			<x:Array x:Key="MenuItems" Type="{x:Type vm:MenuItemViewModel}">
+				<vm:MenuItemViewModel Label="New Puzzle" NavigationType="{x:Type v:NewPuzzleView}" Command="{Binding Source={x:Reference hamburgerMenu}, Path=DataContext.NavigateNewPuzzleCommand}">
+					<vm:MenuItemViewModel.Icon>
+						<ic:PackIconFontAwesome Width="28" Height="28" Kind="FileRegular" />
+					</vm:MenuItemViewModel.Icon>
+				</vm:MenuItemViewModel>
+				<vm:MenuItemViewModel Label="Puzzle" NavigationType="{x:Type v:PuzzleView}" Command="{Binding Source={x:Reference hamburgerMenu}, Path=DataContext.NavigatePuzzleCommand}">
+					<vm:MenuItemViewModel.Icon>
+						<ic:PackIconFontAwesome Width="28" Height="28" Kind="PuzzlePieceSolid" />
+					</vm:MenuItemViewModel.Icon>
+				</vm:MenuItemViewModel>
 			</x:Array>
-			<x:Array x:Key="fillTypes" Type="{x:Type m:EnumDescriptor}">
-				<m:EnumDescriptor Value="{x:Static m:BackgroundFillType.BlurredFill}" Description="Blurred Image" />
-				<m:EnumDescriptor Value="{x:Static m:BackgroundFillType.RainbowSpiral}" Description="Rainbow Spiral" />
-				<m:EnumDescriptor Value="{x:Static m:BackgroundFillType.White}" Description="White" />
+			<x:Array x:Key="OptionsMenuItems" Type="{x:Type vm:MenuItemViewModel}">
+				<vm:MenuItemViewModel Label="Settings" NavigationType="{x:Type v:SettingsView}" Command="{Binding Source={x:Reference hamburgerMenu}, Path=DataContext.NavigateSettingsCommand}">
+					<vm:MenuItemViewModel.Icon>
+						<ic:PackIconFontAwesome Width="28" Height="28" Kind="WrenchSolid" />
+					</vm:MenuItemViewModel.Icon>
+				</vm:MenuItemViewModel>
 			</x:Array>
 		</ResourceDictionary>
 	</mah:MetroWindow.Resources>
-	<mah:MetroWindow.RightWindowCommands>
-		<mah:WindowCommands>
-			<Button Command="{Binding OpenSettingsCommand}">
-				<ic:PackIconFontAwesome Kind="CogSolid" />
-			</Button>
-		</mah:WindowCommands>
-	</mah:MetroWindow.RightWindowCommands>
-	<mah:MetroWindow.Flyouts>
-		<mah:FlyoutsControl>
-			<mah:Flyout Header="Settings" Position="Right" Width="300" Theme="Light" IsModal="True" IsOpen="{Binding IsSettingsFlyoutOpen}">
-				<ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-					<StackPanel Orientation="Vertical" Margin="4">
-						<Label Margin="-2,4,4,-4">Puzzle Background</Label>
-						<ComboBox Margin="4" DisplayMemberPath="Description" SelectedValuePath="Key"
-								  ItemsSource="{StaticResource puzzleBackgrounds}"
-								  SelectedValue="{Binding Source={x:Static p:Settings.Default}, Path=PuzzleBackground}"
-								  SelectedItem="{Binding PuzzleBackground}" />
-						<CheckBox Margin="4,16,4,4" IsChecked="{Binding Source={x:Static p:Settings.Default}, Path=ShowTimer, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">Show Timer</CheckBox>
-						<CheckBox Margin="4,8,4,4" IsChecked="{Binding Source={x:Static p:Settings.Default}, Path=ShowMoves, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">Show Moves</CheckBox>
-					</StackPanel>
-				</ScrollViewer>
-			</mah:Flyout>
-		</mah:FlyoutsControl>
-	</mah:MetroWindow.Flyouts>
-	<DockPanel LastChildFill="True">
-		<StatusBar DockPanel.Dock="Bottom">
-			<StatusBarItem Content="{Binding Path=CurrentImageSource, TargetNullValue=No image loaded}"  />
-			<Separator Style="{StaticResource MahApps.Styles.Separator.StatusBar}" />
-			<StatusBarItem Content="{Binding Path=PuzzleSize.Description, TargetNullValue=No puzzle created}" />
-		</StatusBar>
-		<Grid>
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="300" />
-				<ColumnDefinition Width="*" />
-			</Grid.ColumnDefinitions>
-			<Grid Grid.Column="0" Grid.Row="1" Margin="4" Width="284" ClipToBounds="True">
-				<Grid>
-					<Grid.Resources>
-						<Storyboard x:Key="slideIn">
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" From="-284" To="0" Duration="0:0:0.3" />
-						</Storyboard>
-						<Storyboard x:Key="slideOut">
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" From="0" To="-284" Duration="0:0:0.3" />
-						</Storyboard>
-					</Grid.Resources>
-					<Grid.RenderTransform>
-						<TranslateTransform X="0" Y="0" />
-					</Grid.RenderTransform>
-					<Grid.Style>
-						<Style TargetType="Grid">
-							<Style.Triggers>
-								<DataTrigger Binding="{Binding IsCreatePuzzleFlyoutOpen}" Value="True">
-									<DataTrigger.EnterActions>
-										<BeginStoryboard Storyboard="{StaticResource slideIn}" />
-									</DataTrigger.EnterActions>
-									<DataTrigger.ExitActions>
-										<BeginStoryboard Storyboard="{StaticResource slideOut}" />
-									</DataTrigger.ExitActions>
-								</DataTrigger>
-							</Style.Triggers>
+	<mah:HamburgerMenu x:Name="hamburgerMenu" DisplayMode="CompactOverlay"
+					   ItemTemplate="{StaticResource MenuItemTemplate}"
+					   ItemsSource="{StaticResource MenuItems}"
+					   OptionsItemTemplate="{StaticResource MenuItemTemplate}"
+					   OptionsItemsSource="{StaticResource OptionsMenuItems}">
+		<mah:HamburgerMenu.Content>
+			<DockPanel LastChildFill="True">
+				<StatusBar DockPanel.Dock="Bottom">
+					<StatusBarItem Content="{Binding Path=CurrentImageSource, TargetNullValue=No image loaded}"  />
+					<Separator Style="{StaticResource MahApps.Styles.Separator.StatusBar}" />
+					<StatusBarItem Content="{Binding Path=PuzzleSize.Description, TargetNullValue=No puzzle created}" />
+				</StatusBar>
+				<Frame Source="{Binding CurrentPage}" Navigated="OnFrameNavigated">
+					<Frame.Style>
+						<Style BasedOn="{StaticResource {x:Type Frame}}" TargetType="{x:Type Frame}">
+							<Setter Property="ClipToBounds" Value="True" />
+							<Setter Property="NavigationUIVisibility" Value="Hidden" />
+							<Setter Property="ContentTemplate">
+								<Setter.Value>
+									<DataTemplate>
+										<mah:TransitioningContentControl Content="{Binding}" RestartTransitionOnContentChange="True" Transition="Default" />
+									</DataTemplate>
+								</Setter.Value>
+							</Setter>
 						</Style>
-					</Grid.Style>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="*" />
-						<ColumnDefinition Width="auto" />
-					</Grid.ColumnDefinitions>
-					<Grid.RowDefinitions>
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-					</Grid.RowDefinitions>
-					<Label Grid.Row="0" Grid.ColumnSpan="2" Margin="-2">Pieces</Label>
-					<ComboBox Grid.Row="1" Grid.ColumnSpan="2" Margin="4" DisplayMemberPath="Description" ItemsSource="{StaticResource puzzleSizes}" SelectedItem="{Binding PuzzleSize}" />
-					<Label Grid.Row="2" Grid.ColumnSpan="2" Margin="-2">Image</Label>
-					<TextBox Grid.Row="3" Grid.Column="0" IsReadOnly="True" Margin="4" VerticalContentAlignment="Center" Text="{Binding CurrentImageSource}" />
-					<Button Grid.Row="3" Grid.Column="1" Padding="16,8" Margin="-4,4,4,4" BorderThickness="0,1,1,1" mah:ControlsHelper.CornerRadius="0,4,4,0" Command="{Binding OpenImageCommand}">Browse...</Button>
-					<Image Grid.Row="4" Grid.ColumnSpan="2" Margin="4,0,4,4" Source="{Binding PreviewImage}" />
-					<Label Grid.Row="5" Grid.ColumnSpan="2" Margin="-2">Background Fill</Label>
-					<ComboBox Grid.Row="6" Grid.ColumnSpan="2" Margin="4" ItemsSource="{StaticResource fillTypes}" SelectedValue="{Binding Source={x:Static p:Settings.Default}, Path=PuzzleImageFillType}" SelectedValuePath="Value" DisplayMemberPath="Description" />
-					<Button Grid.Row="7" Grid.ColumnSpan="2" Padding="16,8" Margin="4" Command="{Binding GeneratePuzzleCommand}">Generate Puzzle</Button>
-				</Grid>
-				<Grid>
-					<Grid.Resources>
-						<Storyboard x:Key="slideIn">
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" From="284" To="0" Duration="0:0:0.3" />
-						</Storyboard>
-						<Storyboard x:Key="slideOut">
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" From="0" To="284" Duration="0:0:0.3" />
-						</Storyboard>
-					</Grid.Resources>
-					<Grid.RenderTransform>
-						<TranslateTransform X="284" Y="0" />
-					</Grid.RenderTransform>
-					<Grid.Style>
-						<Style TargetType="Grid">
-							<Style.Triggers>
-								<DataTrigger Binding="{Binding IsCreatePuzzleFlyoutOpen}" Value="False">
-									<DataTrigger.EnterActions>
-										<BeginStoryboard Storyboard="{StaticResource slideIn}" />
-									</DataTrigger.EnterActions>
-									<DataTrigger.ExitActions>
-										<BeginStoryboard Storyboard="{StaticResource slideOut}" />
-									</DataTrigger.ExitActions>
-								</DataTrigger>
-							</Style.Triggers>
-						</Style>
-					</Grid.Style>
-					<Grid.RowDefinitions>
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="*" />
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-						<RowDefinition Height="auto" />
-					</Grid.RowDefinitions>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="51" />
-						<ColumnDefinition Width="*" />
-						<ColumnDefinition Width="auto" />
-					</Grid.ColumnDefinitions>
-					<Button Grid.Row="0" Grid.ColumnSpan="3" Padding="4,4" Margin="4" HorizontalContentAlignment="Stretch"
-							Command="{Binding OpenCreatePuzzleCommand}">
-						<DockPanel LastChildFill="True">
-							<ic:PackIconFontAwesome DockPanel.Dock="Left" Kind="ChevronLeftSolid" />
-							<mah:ContentControlEx HorizontalAlignment="Center" ContentCharacterCasing="Upper" Content="New Puzzle" />
-						</DockPanel>
-					</Button>
-					<Border Grid.Row="1" Grid.ColumnSpan="3" Margin="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="DarkGray" Height="284">
-						<Border Margin="8">
-							<Border.Background>
-								<ImageBrush ImageSource="{Binding PuzzleImage}" Stretch="Uniform" AlignmentX="Center" AlignmentY="Center" />
-							</Border.Background>
-						</Border>
-					</Border>
-					<Label Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right"
-						   Visibility="{Binding Source={x:Static p:Settings.Default}, Path=ShowTimer, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">Time:</Label>
-					<Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="4,0" BorderThickness="1" BorderBrush="#111111" Background="White" ClipToBounds="True"
-							Visibility="{Binding Source={x:Static p:Settings.Default}, Path=ShowTimer, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
-						<Grid>
-							<Border Background="Transparent" BorderBrush="Black" BorderThickness="1" Margin="-1">
-								<Border.Effect>
-									<DropShadowEffect ShadowDepth="0" BlurRadius="10" />
-								</Border.Effect>
-							</Border>
-							<Grid Margin="8">
-								<TextBlock VerticalAlignment="Center" Foreground="#22111111"
-										   FontFamily="Fonts/#DSEG7 Classic Mini" FontWeight="Regular" FontSize="18"
-										   Text="88 88 88" />
-								<TextBlock VerticalAlignment="Center" Foreground="#FF111111"
-										   FontFamily="Fonts/#DSEG7 Classic Mini" FontWeight="Regular" FontSize="18"
-										   Text="{Binding Timer, Converter={StaticResource timestampConverter}}" />
-							</Grid>
-						</Grid>
-					</Border>
-					<Label Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right"
-						   Visibility="{Binding Source={x:Static p:Settings.Default}, Path=ShowMoves, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">Moves:</Label>
-					<Border Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="4" BorderThickness="1" BorderBrush="#111111" Background="White" ClipToBounds="True"
-							Visibility="{Binding Source={x:Static p:Settings.Default}, Path=ShowMoves, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
-						<Grid>
-							<Border Background="Transparent" BorderBrush="Black" BorderThickness="1" Margin="-1">
-								<Border.Effect>
-									<DropShadowEffect ShadowDepth="0" BlurRadius="10" />
-								</Border.Effect>
-							</Border>
-							<Grid Margin="8">
-								<TextBlock VerticalAlignment="Center" Foreground="#22111111"
-										   FontFamily="Fonts/#DSEG7 Classic Mini" FontWeight="Regular" FontSize="18"
-										   Text="88888888888888" />
-								<TextBlock VerticalAlignment="Center" Foreground="#FF111111"
-										   FontFamily="Fonts/#DSEG7 Classic Mini" FontWeight="Regular" FontSize="18"
-										   Text="{Binding MoveCount}" />
-							</Grid>
-						</Grid>
-					</Border>
-					<Label Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right">Zoom:</Label>
-					<Slider Grid.Row="5" Grid.Column="1" Margin="0,0,4,0" VerticalAlignment="Center"
-							SmallChange="1" LargeChange="25" IsSnapToTickEnabled="True" TickFrequency="1"
-							Minimum="{Binding Source={x:Static c:PuzzleControl.MinZoom}, Converter={StaticResource zoomConverter}}"
-							Maximum="{Binding Source={x:Static c:PuzzleControl.MaxZoom}, Converter={StaticResource zoomConverter}}" 
-							Value="{Binding Zoom, Converter={StaticResource zoomConverter}, Mode=TwoWay}" />
-					<Label Grid.Row="5" Grid.Column="2" Margin="4,0,0,0" Width="40" HorizontalContentAlignment="Left" VerticalAlignment="Center" Content="{Binding Zoom, Converter={StaticResource zoomConverter}}" ContentStringFormat="{}{0}%" />
-					<Button Grid.Row="6" Grid.ColumnSpan="3" Command="{Binding RandomizePuzzleCommand}" Padding="16,4" Margin="4">Randomize</Button>
-					<Button Grid.Row="7" Grid.ColumnSpan="3" Command="{Binding SolvePuzzleCommand}" Padding="16,4" Margin="4">Solve</Button>
-				</Grid>
-			</Grid>
-			<c:PuzzleContainer Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
-						  VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
-						  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
-						  Background="{Binding PuzzleBackground.BackgroundBrush}">
-				<c:PuzzleControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="22"
-								 Pieces="{Binding Pieces}"
-								 Image="{Binding PuzzleImage}"
-								 Zoom="{Binding Zoom, Mode=TwoWay}"
-								 MoveCount="{Binding MoveCount, Mode=OneWayToSource}"
-								 PuzzleController="{Binding}" />
-			</c:PuzzleContainer>
-		</Grid>
-	</DockPanel>
+					</Frame.Style>
+				</Frame>
+			</DockPanel>
+		</mah:HamburgerMenu.Content>
+	</mah:HamburgerMenu>
 </mah:MetroWindow>

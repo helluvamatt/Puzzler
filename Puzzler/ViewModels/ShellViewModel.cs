@@ -40,13 +40,20 @@ namespace Puzzler.ViewModels
 
 			Settings.Default.PropertyChanged += OnSettingsPropertyChanged;
 
-			OpenSettingsCommand = new DelegateCommand(() => IsSettingsFlyoutOpen = true);
-			OpenCreatePuzzleCommand = new DelegateCommand(() => IsCreatePuzzleFlyoutOpen = true);
+			// Navigation commands
+			NavigateSettingsCommand = new DelegateCommand(() => Navigate("Views/SettingsView.xaml"));
+			NavigateNewPuzzleCommand = new DelegateCommand(() => Navigate("Views/NewPuzzleView.xaml"));
+			NavigatePuzzleCommand = new DelegateCommand(() => Navigate("Views/PuzzleView.xaml"), () => PuzzleImage != null);
+
+			// NewPuzzle commands
 			OpenImageCommand = new DelegateCommand(OnOpenImage);
 			GeneratePuzzleCommand = new DelegateCommand(OnGeneratePuzzle, () => PreviewImage != null && PuzzleSize != null);
+
+			// Puzzle commands
 			SolvePuzzleCommand = new DelegateCommand(OnSolvePuzzle, () => Pieces != null && Pieces.Any());
 			RandomizePuzzleCommand = new DelegateCommand(OnRandomizePuzzle, () => Pieces != null && Pieces.Any());
 
+			// Load puzzle size from settings
 			PuzzleSize = new Int32SizeDescriptor { Width = Settings.Default.PieceHorizontalCount, Height = Settings.Default.PieceVerticalCount };
 
 			// Load background from settings
@@ -57,14 +64,20 @@ namespace Puzzler.ViewModels
 				// If the setting is invalid, just use the first one in the list
 				if (PuzzleBackground == null) PuzzleBackground = backgrounds.FirstOrDefault();
 			}
+
+			// Initial navigation
+			Navigate("Views/NewPuzzleView.xaml");
 		}
 
 		#region Commands
 
-		public ICommand OpenSettingsCommand { get; }
-		public ICommand OpenCreatePuzzleCommand { get; }
+		public ICommand NavigateSettingsCommand { get; }
+		public ICommand NavigateNewPuzzleCommand { get; }
+		public ICommand NavigatePuzzleCommand { get; }
+
 		public ICommand OpenImageCommand { get; }
 		public ICommand GeneratePuzzleCommand { get; }
+
 		public ICommand SolvePuzzleCommand { get; }
 		public ICommand RandomizePuzzleCommand { get; }
 
@@ -72,26 +85,14 @@ namespace Puzzler.ViewModels
 
 		#region Dependency properties
 
-		#region IsCreatePuzzleFlyoutOpen
+		#region CurrentPage
 
-		public static readonly DependencyProperty IsCreatePuzzleFlyoutOpenProperty = DependencyProperty.Register(nameof(IsCreatePuzzleFlyoutOpen), typeof(bool), typeof(ShellViewModel), new PropertyMetadata(true));
+		public static readonly DependencyProperty CurrentPageProperty = DependencyProperty.Register(nameof(CurrentPage), typeof(Uri), typeof(ShellViewModel), new PropertyMetadata(null));
 
-		public bool IsCreatePuzzleFlyoutOpen
+		public Uri CurrentPage
 		{
-			get => (bool)GetValue(IsCreatePuzzleFlyoutOpenProperty);
-			set => SetValue(IsCreatePuzzleFlyoutOpenProperty, value);
-		}
-
-		#endregion
-
-		#region IsSettingsFlyoutOpen
-
-		public static readonly DependencyProperty IsSettingsFlyoutOpenProperty = DependencyProperty.Register(nameof(IsSettingsFlyoutOpen), typeof(bool), typeof(ShellViewModel), new PropertyMetadata(false));
-
-		public bool IsSettingsFlyoutOpen
-		{
-			get => (bool)GetValue(IsSettingsFlyoutOpenProperty);
-			set => SetValue(IsSettingsFlyoutOpenProperty, value);
+			get => (Uri)GetValue(CurrentPageProperty);
+			set => SetValue(CurrentPageProperty, value);
 		}
 
 		#endregion
@@ -243,6 +244,11 @@ namespace Puzzler.ViewModels
 		#endregion
 
 		#region Event handlers
+
+		private void Navigate(string uri)
+		{
+			CurrentPage = new Uri(uri, UriKind.RelativeOrAbsolute);
+		}
 
 		private async void OnOpenImage()
 		{
@@ -424,9 +430,9 @@ namespace Puzzler.ViewModels
 				}
 				Pieces = pieces;
 
-				// Close flyout and update VM state
+				// Update VM state
 				CommandManager.InvalidateRequerySuggested();
-				IsCreatePuzzleFlyoutOpen = false;
+				Navigate("Views/PuzzleView.xaml");
 
 				// Reset and begin timer
 				ResetTimer();

@@ -1,0 +1,116 @@
+﻿<Page x:Class="Puzzler.Views.PuzzleView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+	  xmlns:ic="http://metro.mahapps.com/winfx/xaml/iconpacks"
+	  xmlns:c="clr-namespace:Puzzler.Controls"
+	  xmlns:conv="clr-namespace:Puzzler.Converters"
+	  xmlns:p="clr-namespace:Puzzler.Properties"
+	  xmlns:vm="clr-namespace:Puzzler.ViewModels"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+	  d:DataContext="{d:DesignInstance Type={x:Type vm:ShellViewModel}, IsDesignTimeCreatable=False}"
+      Title="Puzzle">
+	<Page.Resources>
+		<Style TargetType="Label">
+			<Setter Property="FontWeight" Value="Bold" />
+		</Style>
+		<conv:FactorConverter x:Key="zoomConverter" Factor="100" />
+		<conv:TimestampConverter x:Key="timestampConverter" />
+	</Page.Resources>
+	<DockPanel LastChildFill="True">
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="300" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+			<Grid Grid.Column="0" Grid.Row="1" Margin="4" Width="284">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="auto" />
+					<RowDefinition Height="auto" />
+					<RowDefinition Height="auto" />
+					<RowDefinition Height="*" />
+					<RowDefinition Height="auto" />
+					<RowDefinition Height="auto" />
+					<RowDefinition Height="auto" />
+				</Grid.RowDefinitions>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="51" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="auto" />
+				</Grid.ColumnDefinitions>
+				<Border Grid.Row="0" Grid.ColumnSpan="3" Margin="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="DarkGray" Height="284">
+					<Border Margin="8">
+						<Border.Background>
+							<ImageBrush ImageSource="{Binding PuzzleImage}" Stretch="Uniform" AlignmentX="Center" AlignmentY="Center" />
+						</Border.Background>
+					</Border>
+				</Border>
+				<Label Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right"
+					   Visibility="{Binding Source={x:Static p:Settings.Default}, Path=ShowTimer, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">Time:</Label>
+				<Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="4,0" BorderThickness="1" BorderBrush="#111111" Background="White" ClipToBounds="True"
+						Visibility="{Binding Source={x:Static p:Settings.Default}, Path=ShowTimer, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+					<Grid>
+						<Border Background="Transparent" BorderBrush="Black" BorderThickness="1" Margin="-1">
+							<Border.Effect>
+								<DropShadowEffect ShadowDepth="0" BlurRadius="10" />
+							</Border.Effect>
+						</Border>
+						<Grid Margin="8">
+							<TextBlock VerticalAlignment="Center" Foreground="#22111111"
+										FontFamily="../Fonts/#DSEG7 Classic Mini" FontWeight="Regular" FontSize="18"
+										Text="88 88 88" />
+							<TextBlock VerticalAlignment="Center" Foreground="#FF111111"
+										FontFamily="../Fonts/#DSEG7 Classic Mini" FontWeight="Regular" FontSize="18"
+										Text="{Binding Timer, Converter={StaticResource timestampConverter}}" />
+						</Grid>
+					</Grid>
+				</Border>
+				<Label Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right"
+						Visibility="{Binding Source={x:Static p:Settings.Default}, Path=ShowMoves, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">Moves:</Label>
+				<Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="4" BorderThickness="1" BorderBrush="#111111" Background="White" ClipToBounds="True"
+						Visibility="{Binding Source={x:Static p:Settings.Default}, Path=ShowMoves, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+					<Grid>
+						<Border Background="Transparent" BorderBrush="Black" BorderThickness="1" Margin="-1">
+							<Border.Effect>
+								<DropShadowEffect ShadowDepth="0" BlurRadius="10" />
+							</Border.Effect>
+						</Border>
+						<Grid Margin="8">
+							<TextBlock VerticalAlignment="Center" Foreground="#22111111"
+										FontFamily="../Fonts/#DSEG7 Classic Mini" FontWeight="Regular" FontSize="18"
+										Text="88888888888888" />
+							<TextBlock VerticalAlignment="Center" Foreground="#FF111111"
+										FontFamily="../Fonts/#DSEG7 Classic Mini" FontWeight="Regular" FontSize="18"
+										Text="{Binding MoveCount}" />
+						</Grid>
+					</Grid>
+				</Border>
+				<!-- Missing Image at Grid.Row="3" -->
+				<Label Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right">Zoom:</Label>
+				<Slider Grid.Row="4" Grid.Column="1" Margin="0,0,4,0" VerticalAlignment="Center"
+						SmallChange="1" LargeChange="25" IsSnapToTickEnabled="True" TickFrequency="1"
+						Minimum="{Binding Source={x:Static c:PuzzleControl.MinZoom}, Converter={StaticResource zoomConverter}}"
+						Maximum="{Binding Source={x:Static c:PuzzleControl.MaxZoom}, Converter={StaticResource zoomConverter}}" 
+						Value="{Binding Zoom, Converter={StaticResource zoomConverter}, Mode=TwoWay}" />
+				<Label Grid.Row="4" Grid.Column="2" Margin="4,0,0,0" Width="40" HorizontalContentAlignment="Left" VerticalAlignment="Center" Content="{Binding Zoom, Converter={StaticResource zoomConverter}}" ContentStringFormat="{}{0}%" />
+				<Button Grid.Row="5" Grid.ColumnSpan="3" Command="{Binding RandomizePuzzleCommand}" Padding="16,4" Margin="4">Randomize</Button>
+				<Button Grid.Row="6" Grid.ColumnSpan="3" Command="{Binding SolvePuzzleCommand}" Padding="16,4" Margin="4">Solve</Button>
+			</Grid>
+			<c:PuzzleContainer Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
+						  VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+						  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+				<Border Background="{Binding PuzzleBackground.BackgroundBrush}">
+					<c:PuzzleControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="22"
+									 Pieces="{Binding Pieces}"
+									 Image="{Binding PuzzleImage}"
+									 Zoom="{Binding Zoom, Mode=TwoWay}"
+									 MoveCount="{Binding MoveCount, Mode=OneWayToSource}"
+									 PuzzleController="{Binding}" />
+				</Border>
+			</c:PuzzleContainer>
+		</Grid>
+	</DockPanel>
+</Page>
