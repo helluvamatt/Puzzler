@@ -15,6 +15,8 @@ namespace Puzzler.Controls
 		public const int TabSize = 20;
 		private const int Padding = 2;
 
+		private const int Offset = TabSize + Padding;
+
 		private readonly TranslateTransform _PositionTransform;
 		private readonly ScaleTransform _ZoomTransform;
 		private readonly TransformGroup _Transform;
@@ -97,25 +99,23 @@ namespace Puzzler.Controls
 
 		public Point Position
 		{
-			get => new Point(_PositionTransform.X + TabSize, _PositionTransform.Y + TabSize);
+			get => new Point(_PositionTransform.X, _PositionTransform.Y);
 			set
 			{
-				_PositionTransform.X = value.X - TabSize;
-				_PositionTransform.Y = value.Y - TabSize;
+				_PositionTransform.X = value.X;
+				_PositionTransform.Y = value.Y;
 			}
 		}
 
 		public void Render(DrawingContext drawingContext)
 		{
 			drawingContext.PushTransform(_Transform);
-			drawingContext.DrawImage(_Image, new Rect(-Padding, -Padding, _Image.Width, _Image.Height));
+			drawingContext.DrawImage(_Image, new Rect(-Offset, -Offset, _Image.Width, _Image.Height));
 			drawingContext.Pop();
 		}
 
 		public bool HitTest(Point hitPoint)
 		{
-			const int offset = Padding + TabSize;
-			hitPoint.Offset(-offset, -offset);
 			return _TransformedGeometry.FillContains(hitPoint);
 		}
 
