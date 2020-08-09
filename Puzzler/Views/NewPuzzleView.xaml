@@ -71,7 +71,8 @@
 		<Button Grid.Row="1" Grid.Column="0" Padding="16,8" Margin="4" Command="{Binding GeneratePuzzleCommand}">Generate Puzzle</Button>
 		<Border Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" Margin="4" Background="DarkGray">
 			<Grid>
-				<Image Margin="8" Source="{Binding PreviewImage}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+				<Image Margin="8" HorizontalAlignment="Center" VerticalAlignment="Center"
+					   Source="{Binding PreviewImage}" Stretch="Uniform" StretchDirection="DownOnly"
 					   Visibility="{Binding PreviewImage, Converter={StaticResource nullToVisibilityConverter}}"/>
 				<TextBlock Margin="8" HorizontalAlignment="Center" VerticalAlignment="Center"
 						   Foreground="#FFFFFFFF" FontSize="24pt"
