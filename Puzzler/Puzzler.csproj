@@ -78,6 +78,7 @@
     <Compile Include="Services\IWindowResourceService.cs" />
     <Compile Include="Shaders\IShader.cs" />
     <Compile Include="Shaders\ColorWheelGradientShader.cs" />
+    <Compile Include="Shaders\RandomSpheresShader.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\ImageGenViewModel.cs" />
