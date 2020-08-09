@@ -265,13 +265,16 @@ namespace Puzzler.ViewModels
 		public void PauseTimer()
 		{
 			_Timer.Stop();
-			_PreviousTime += DateTime.Now - _TimerStart.Value;
+			if (_TimerStart.HasValue) _PreviousTime += DateTime.Now - _TimerStart.Value;
 		}
 
 		public void ResumeTimer()
 		{
-			_TimerStart = DateTime.Now;
-			if (Settings.Default.ShowTimer) _Timer.Start();
+			if (!IsSolved)
+			{
+				_TimerStart = DateTime.Now;
+				if (Settings.Default.ShowTimer) _Timer.Start();
+			}
 		}
 
 		public void Dispose()
