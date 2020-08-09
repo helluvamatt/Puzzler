@@ -3,10 +3,7 @@ using Puzzler.Models;
 using Puzzler.Services;
 using Puzzler.Shaders;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -115,6 +112,24 @@ namespace Puzzler.ViewModels
 			var bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Pbgra32, null);
 			const int bpp = 4; // bytes per pixel
 			byte[] buffer = new byte[width * height * bpp];
+
+			// Fill buffer with background color
+			var bgColor = BackgroundColor;
+			byte r = bgColor.R;
+			byte g = bgColor.G;
+			byte b = bgColor.B;
+			byte a = 0xFF;
+			int i = 0;
+			for (int y = 0; y < height; y++)
+			{
+				for (int x = 0; x < width; x++)
+				{
+					buffer[i++] = b;
+					buffer[i++] = g;
+					buffer[i++] = r;
+					buffer[i++] = a;
+				}
+			}
 
 			// Render asynchronously
 			await Task.Run(() => shader.Render(buffer, width, height));
