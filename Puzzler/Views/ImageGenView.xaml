@@ -31,9 +31,6 @@
 				<m:Int32SizeDescriptor Width="20" Height="20" />
 				<m:Int32SizeDescriptor Width="25" Height="20" />
 			</x:Array>
-			<Popup x:Key="bgColorPopup" Width="350" Height="200" Placement="Bottom" PlacementTarget="{Binding ElementName=bgColorButton}" IsOpen="{Binding IsBgColorPopupOpen}" StaysOpen="False">
-				<c:ColorPicker SelectedColor="{Binding BackgroundColor}" />
-			</Popup>
 		</ResourceDictionary>
 	</Page.Resources>
 	<Grid Margin="4" DataContext="{Binding ImageGenViewModel}">
@@ -46,7 +43,7 @@
 				<Button Margin="4" Command="{Binding GenerateImageCommand}">Generate Image</Button>
 				<Button Margin="4" Command="{Binding SaveImageCommand}">Save Image As...</Button>
 			</StackPanel>
-			<ScrollViewer  HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+			<ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
 				<StackPanel Orientation="Vertical" Margin="4">
 					<Label Margin="-2">Puzzle / Image Size</Label>
 					<ComboBox Margin="4" ItemsSource="{StaticResource puzzleSizes}" DisplayMemberPath="Description" SelectedItem="{Binding PuzzleSize}" />
@@ -58,6 +55,9 @@
 							</Rectangle.Fill>
 						</Rectangle>
 					</Button>
+					<Popup Width="350" Height="200" Placement="Bottom" PlacementTarget="{Binding ElementName=bgColorButton}" IsOpen="{Binding IsBgColorPopupOpen}" StaysOpen="False">
+						<c:ColorPicker SelectedColor="{Binding BackgroundColor}" />
+					</Popup>
 					<Label Margin="-2">Shader</Label>
 					<ComboBox Margin="4" DisplayMemberPath="Description" SelectedValuePath="Type"
 							  ItemsSource="{StaticResource shaders}" SelectedValue="{Binding ShaderType}" />
