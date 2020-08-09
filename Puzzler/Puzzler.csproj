@@ -53,11 +53,18 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Controls\ColorPicker.xaml.cs">
+      <DependentUpon>ColorPicker.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\PuzzleContainer.cs" />
     <Compile Include="Controls\PuzzleControl.cs" />
     <Compile Include="Controls\PuzzlePieceControl.cs" />
+    <Compile Include="Converters\ColorConverter.cs" />
     <Compile Include="Converters\FactorConverter.cs" />
+    <Compile Include="Converters\HexColorConverter.cs" />
+    <Compile Include="Converters\LengthMultiplyConverter.cs" />
     <Compile Include="Converters\NullToVisibilityConverter.cs" />
+    <Compile Include="Converters\PureHueConverter.cs" />
     <Compile Include="Converters\TimestampConverter.cs" />
     <Compile Include="Controls\PuzzlePieceGroup.cs" />
     <Compile Include="Models\PuzzleBackgroundDescriptor.cs" />
@@ -65,14 +72,22 @@
     <Compile Include="Models\EnumDescriptor.cs" />
     <Compile Include="Models\Int32SizeDescriptor.cs" />
     <Compile Include="Models\Piece.cs" />
+    <Compile Include="Models\TypeDescriptor.cs" />
     <Compile Include="Services\Animator.cs" />
     <Compile Include="Services\IDialogService.cs" />
     <Compile Include="Services\IWindowResourceService.cs" />
+    <Compile Include="Shaders\IShader.cs" />
+    <Compile Include="Shaders\ColorWheelGradientShader.cs" />
+    <Compile Include="Utils.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
+    <Compile Include="ViewModels\ImageGenViewModel.cs" />
     <Compile Include="ViewModels\MenuItemViewModel.cs" />
     <Compile Include="ViewModels\MessageDialogViewModel.cs" />
     <Compile Include="ViewModels\PuzzleViewModel.cs" />
     <Compile Include="ViewModels\ShellViewModel.cs" />
+    <Compile Include="Views\ImageGenView.xaml.cs">
+      <DependentUpon>ImageGenView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\NewPuzzleView.xaml.cs">
       <DependentUpon>NewPuzzleView.xaml</DependentUpon>
     </Compile>
@@ -86,6 +101,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Controls\ColorPicker.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -98,6 +117,14 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Shaders\Shaders.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ImageGenView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\NewPuzzleView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

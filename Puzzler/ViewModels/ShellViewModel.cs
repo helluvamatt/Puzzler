@@ -30,10 +30,13 @@ namespace Puzzler.ViewModels
 			_DialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
 			_ResourceService = resourceService ?? throw new ArgumentNullException(nameof(resourceService));
 
+			ImageGenViewModel = new ImageGenViewModel(_DialogService);
+
 			// Navigation commands
 			NavigateSettingsCommand = new DelegateCommand(() => Navigate("Views/SettingsView.xaml"));
 			NavigateNewPuzzleCommand = new DelegateCommand(() => Navigate("Views/NewPuzzleView.xaml"));
 			NavigatePuzzleCommand = new DelegateCommand(() => Navigate("Views/PuzzleView.xaml"), () => Puzzle != null);
+			NavigateImageGenCommand = new DelegateCommand(() => Navigate("Views/ImageGenView.xaml"));
 
 			// NewPuzzle commands
 			OpenImageCommand = new DelegateCommand(OnOpenImage);
@@ -59,11 +62,18 @@ namespace Puzzler.ViewModels
 			Navigate("Views/NewPuzzleView.xaml");
 		}
 
+		#region Child view models
+
+		public ImageGenViewModel ImageGenViewModel { get; }
+
+		#endregion
+
 		#region Commands
 
 		public ICommand NavigateSettingsCommand { get; }
 		public ICommand NavigateNewPuzzleCommand { get; }
 		public ICommand NavigatePuzzleCommand { get; }
+		public ICommand NavigateImageGenCommand { get; }
 
 		public ICommand OpenImageCommand { get; }
 		public ICommand GeneratePuzzleCommand { get; }

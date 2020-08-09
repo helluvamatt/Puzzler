@@ -175,7 +175,5 @@ namespace Puzzler
 		}
 
 		#endregion
-
-
 	}
 }
