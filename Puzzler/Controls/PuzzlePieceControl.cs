@@ -23,9 +23,9 @@ namespace Puzzler.Controls
 		private readonly Geometry _TransformedGeometry;
 		private readonly BitmapSource _Image;
 
-		public PuzzlePieceControl(Piece piece, BitmapSource image)
+		public PuzzlePieceControl(Piece piece, BitmapSource image, double xPos, double yPos)
 		{
-			_PositionTransform = new TranslateTransform(-TabSize, -TabSize);
+			_PositionTransform = new TranslateTransform(xPos, yPos);
 			_ZoomTransform = new ScaleTransform(1, 1);
 			Piece = piece ?? throw new ArgumentNullException(nameof(piece));
 

@@ -44,7 +44,7 @@
 				<Border Grid.Row="0" Grid.ColumnSpan="3" Margin="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="DarkGray" Height="284">
 					<Border Margin="8">
 						<Border.Background>
-							<ImageBrush ImageSource="{Binding PuzzleImage}" Stretch="Uniform" AlignmentX="Center" AlignmentY="Center" />
+							<ImageBrush ImageSource="{Binding Puzzle.Image}" Stretch="Uniform" AlignmentX="Center" AlignmentY="Center" />
 						</Border.Background>
 					</Border>
 				</Border>
@@ -64,7 +64,7 @@
 										Text="88 88 88" />
 							<TextBlock VerticalAlignment="Center" Foreground="#FF111111"
 										FontFamily="../Fonts/#DSEG7 Classic Mini" FontWeight="Regular" FontSize="18"
-										Text="{Binding Timer, Converter={StaticResource timestampConverter}}" />
+										Text="{Binding Puzzle.Timer, Converter={StaticResource timestampConverter}}" />
 						</Grid>
 					</Grid>
 				</Border>
@@ -84,11 +84,11 @@
 										Text="88888888888888" />
 							<TextBlock VerticalAlignment="Center" Foreground="#FF111111"
 										FontFamily="../Fonts/#DSEG7 Classic Mini" FontWeight="Regular" FontSize="18"
-										Text="{Binding MoveCount}" />
+										Text="{Binding Puzzle.MoveCount}" />
 						</Grid>
 					</Grid>
 				</Border>
-				<!-- Missing Image at Grid.Row="3" -->
+				<!-- Spacer Grid.Row="3" -->
 				<Label Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right">Zoom:</Label>
 				<Slider Grid.Row="4" Grid.Column="1" Margin="0,0,4,0" VerticalAlignment="Center"
 						SmallChange="1" LargeChange="25" IsSnapToTickEnabled="True" TickFrequency="1"
@@ -104,11 +104,8 @@
 						  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
 				<Border Background="{Binding PuzzleBackground.BackgroundBrush}">
 					<c:PuzzleControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="22"
-									 Pieces="{Binding Pieces}"
-									 Image="{Binding PuzzleImage}"
 									 Zoom="{Binding Zoom, Mode=TwoWay}"
-									 MoveCount="{Binding MoveCount, Mode=OneWayToSource}"
-									 PuzzleController="{Binding}" />
+									 Puzzle="{Binding Puzzle}" />
 				</Border>
 			</c:PuzzleContainer>
 		</Grid>

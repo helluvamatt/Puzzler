@@ -59,6 +59,7 @@
     <Compile Include="Converters\FactorConverter.cs" />
     <Compile Include="Converters\NullToVisibilityConverter.cs" />
     <Compile Include="Converters\TimestampConverter.cs" />
+    <Compile Include="Controls\PuzzlePieceGroup.cs" />
     <Compile Include="Models\PuzzleBackgroundDescriptor.cs" />
     <Compile Include="Models\BackgroundFillType.cs" />
     <Compile Include="Models\EnumDescriptor.cs" />
@@ -68,9 +69,9 @@
     <Compile Include="Services\IDialogService.cs" />
     <Compile Include="Services\IWindowResourceService.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
-    <Compile Include="ViewModels\IPuzzleController.cs" />
     <Compile Include="ViewModels\MenuItemViewModel.cs" />
     <Compile Include="ViewModels\MessageDialogViewModel.cs" />
+    <Compile Include="ViewModels\PuzzleViewModel.cs" />
     <Compile Include="ViewModels\ShellViewModel.cs" />
     <Compile Include="Views\NewPuzzleView.xaml.cs">
       <DependentUpon>NewPuzzleView.xaml</DependentUpon>

@@ -20,38 +20,28 @@ using System.Windows.Threading;
 
 namespace Puzzler.ViewModels
 {
-	public class ShellViewModel : DependencyObject, IPuzzleController
+	public class ShellViewModel : DependencyObject
 	{
 		private readonly IDialogService _DialogService;
 		private readonly IWindowResourceService _ResourceService;
-		private readonly DispatcherTimer _Timer;
-
-		private DateTime? _TimerStart;
 
 		public ShellViewModel(IDialogService dialogService, IWindowResourceService resourceService)
 		{
 			_DialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
 			_ResourceService = resourceService ?? throw new ArgumentNullException(nameof(resourceService));
-			_Timer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher)
-			{
-				Interval = TimeSpan.FromMilliseconds(50),
-			};
-			_Timer.Tick += OnTimerTick;
-
-			Settings.Default.PropertyChanged += OnSettingsPropertyChanged;
 
 			// Navigation commands
 			NavigateSettingsCommand = new DelegateCommand(() => Navigate("Views/SettingsView.xaml"));
 			NavigateNewPuzzleCommand = new DelegateCommand(() => Navigate("Views/NewPuzzleView.xaml"));
-			NavigatePuzzleCommand = new DelegateCommand(() => Navigate("Views/PuzzleView.xaml"), () => PuzzleImage != null);
+			NavigatePuzzleCommand = new DelegateCommand(() => Navigate("Views/PuzzleView.xaml"), () => Puzzle != null);
 
 			// NewPuzzle commands
 			OpenImageCommand = new DelegateCommand(OnOpenImage);
 			GeneratePuzzleCommand = new DelegateCommand(OnGeneratePuzzle, () => PreviewImage != null && PuzzleSize != null);
 
 			// Puzzle commands
-			SolvePuzzleCommand = new DelegateCommand(OnSolvePuzzle, () => Pieces != null && Pieces.Any());
-			RandomizePuzzleCommand = new DelegateCommand(OnRandomizePuzzle, () => Pieces != null && Pieces.Any());
+			SolvePuzzleCommand = new DelegateCommand(() => Puzzle?.Solve(), () => Puzzle != null);
+			RandomizePuzzleCommand = new DelegateCommand(() => Puzzle?.Randomize(), () => Puzzle != null);
 
 			// Load puzzle size from settings
 			PuzzleSize = new Int32SizeDescriptor { Width = Settings.Default.PieceHorizontalCount, Height = Settings.Default.PieceVerticalCount };
@@ -109,18 +99,6 @@ namespace Puzzler.ViewModels
 
 		#endregion
 
-		#region PuzzleImage
-
-		public static readonly DependencyProperty PuzzleImageProperty = DependencyProperty.Register(nameof(PuzzleImage), typeof(BitmapSource), typeof(ShellViewModel), new PropertyMetadata(null));
-
-		public BitmapSource PuzzleImage
-		{
-			get => (BitmapSource)GetValue(PuzzleImageProperty);
-			set => SetValue(PuzzleImageProperty, value);
-		}
-
-		#endregion
-
 		#region CurrentImageSource
 
 		public static readonly DependencyProperty CurrentImageSourceProperty = DependencyProperty.Register(nameof(CurrentImageSource), typeof(string), typeof(ShellViewModel), new PropertyMetadata(null));
@@ -157,6 +135,23 @@ namespace Puzzler.ViewModels
 
 		#endregion
 
+		#region Puzzle
+
+		public static readonly DependencyProperty PuzzleProperty = DependencyProperty.Register(nameof(Puzzle), typeof(PuzzleViewModel), typeof(ShellViewModel), new PropertyMetadata(null, OnPuzzleChanged));
+
+		public PuzzleViewModel Puzzle
+		{
+			get => (PuzzleViewModel)GetValue(PuzzleProperty);
+			set => SetValue(PuzzleProperty, value);
+		}
+
+		private static void OnPuzzleChanged(DependencyObject owner, DependencyPropertyChangedEventArgs e)
+		{
+			if (e.OldValue is IDisposable disposable) disposable.Dispose(); 
+		}
+
+		#endregion
+
 		#region Zoom
 
 		public static readonly DependencyProperty ZoomProperty = DependencyProperty.Register(nameof(Zoom), typeof(double), typeof(ShellViewModel), new PropertyMetadata(1.0));
@@ -169,84 +164,24 @@ namespace Puzzler.ViewModels
 
 		#endregion
 
-		#region Pieces
-
-		public static readonly DependencyProperty PiecesProperty = DependencyProperty.Register(nameof(Pieces), typeof(IEnumerable<Piece>), typeof(ShellViewModel), new PropertyMetadata(null));
-
-		public IEnumerable<Piece> Pieces
-		{
-			get => (IEnumerable<Piece>)GetValue(PiecesProperty);
-			set => SetValue(PiecesProperty, value);
-		}
-
-		#endregion
-
-		#region MoveCount
-
-		public static readonly DependencyProperty MoveCountProperty = DependencyProperty.Register(nameof(MoveCount), typeof(int), typeof(ShellViewModel), new PropertyMetadata(0));
-
-		public int MoveCount
-		{
-			get => (int)GetValue(MoveCountProperty);
-			set => SetValue(MoveCountProperty, value);
-		}
-
-		#endregion
-
-		#region Timer
-
-		public static readonly DependencyProperty TimerProperty = DependencyProperty.Register(nameof(Timer), typeof(TimeSpan), typeof(ShellViewModel), new PropertyMetadata(TimeSpan.Zero));
-
-		public TimeSpan Timer
-		{
-			get => (TimeSpan)GetValue(TimerProperty);
-			set => SetValue(TimerProperty, value);
-		}
-
-		#endregion
-
-		#endregion
-
-		#region IPuzzleController impl
-
-		public event EventHandler SolvePuzzle;
-		public event EventHandler RandomizePuzzle;
-
-		public void OnPuzzleRandomized(bool wasSolved)
-		{
-			if (wasSolved) ResetTimer();
-		}
-
-		public void OnPuzzleCompleted(bool autoSolved, int moveCount)
-		{
-			// Stop timer
-			if (Settings.Default.ShowTimer) _Timer.Stop();
-			UpdateTimer();
-			_TimerStart = null;
-
-			// Show completed message and statistics
-			if (!autoSolved)
-			{
-				int moves = MoveCount;
-				int pieces = PuzzleSize.Width * PuzzleSize.Height;
-				float avgMovesPerPiece = moves / (float)pieces;
-
-				var statisticsBuilder = new StringBuilder();
-				statisticsBuilder.AppendLine($"Pieces Count:       {pieces}");
-				statisticsBuilder.AppendLine($"Move Count:         {moves}");
-				statisticsBuilder.AppendLine($"Total Time:         {Timer}");
-				statisticsBuilder.AppendLine($"Avg. Moves / Piece: {avgMovesPerPiece}");
-
-				_DialogService.ShowMessageBox("Complete!", "You have completed the puzzle!", MessageBoxType.Info, statisticsBuilder.ToString().TrimEnd());
-			}
-		}
-
 		#endregion
 
 		#region Event handlers
 
 		private void Navigate(string uri)
 		{
+			if (Puzzle != null)
+			{
+				if (uri == "Views/PuzzleView.xaml")
+				{
+					Puzzle.ResumeTimer();
+				}
+				else
+				{
+					Puzzle.PauseTimer();
+				}
+			}
+
 			CurrentPage = new Uri(uri, UriKind.RelativeOrAbsolute);
 		}
 
@@ -405,7 +340,6 @@ namespace Puzzler.ViewModels
 				context.Close();
 				RenderTargetBitmap bmp = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
 				bmp.Render(visual);
-				PuzzleImage = bmp;
 
 				// Generate pieces
 				var pieces = new List<Piece>();
@@ -428,54 +362,12 @@ namespace Puzzler.ViewModels
 						pieces.Add(pc);
 					}
 				}
-				Pieces = pieces;
 
 				// Update VM state
+				Puzzle = new PuzzleViewModel(_DialogService, pieces, bmp, hCount, vCount);
 				CommandManager.InvalidateRequerySuggested();
 				Navigate("Views/PuzzleView.xaml");
-
-				// Reset and begin timer
-				ResetTimer();
 			}
-		}
-
-		private void OnSolvePuzzle()
-		{
-			SolvePuzzle?.Invoke(this, EventArgs.Empty);
-		}
-
-		private void OnRandomizePuzzle()
-		{
-			RandomizePuzzle?.Invoke(this, EventArgs.Empty);
-		}
-
-		private void OnTimerTick(object sender, EventArgs e)
-		{
-			UpdateTimer();
-		}
-
-		private void OnSettingsPropertyChanged(object sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(Settings.ShowTimer))
-			{
-				_Timer.IsEnabled = Settings.Default.ShowTimer;
-			}
-		}
-
-		#endregion
-
-		#region Timer
-
-		private void ResetTimer()
-		{
-			_TimerStart = DateTime.Now;
-			if (Settings.Default.ShowTimer) _Timer.Start();
-		}
-
-		private void UpdateTimer()
-		{
-			if (_TimerStart.HasValue) Timer = DateTime.Now - _TimerStart.Value;
-			else Timer = TimeSpan.Zero;
 		}
 
 		#endregion
