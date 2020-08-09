@@ -5,5 +5,6 @@
 	<x:Array x:Key="shaders" Type="{x:Type m:TypeDescriptor}">
 		<m:TypeDescriptor Description="Color Wheel" Type="{x:Type local:ColorWheelGradientShader}" />
 		<m:TypeDescriptor Description="Random Spheres" Type="{x:Type local:RandomSpheresShader}" />
+		<m:TypeDescriptor Description="Julia Set" Type="{x:Type local:JuliaSetShader}" />
 	</x:Array>
 </ResourceDictionary>
