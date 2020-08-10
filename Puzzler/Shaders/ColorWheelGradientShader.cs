@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace Puzzler.Shaders
 {
@@ -12,8 +9,11 @@ namespace Puzzler.Shaders
 	{
 		private const double RAD_TO_DEG = 57.295779513082320876798154814105;
 
-		public void Render(byte[] buffer, int w, int h)
+		public Type ConfigurationType => typeof(ColorWheelGradientShaderConfig);
+
+		public void Render(byte[] buffer, int w, int h, object config)
 		{
+			var cfg = (ColorWheelGradientShaderConfig)config;
 			int cX = w / 2;
 			int cY = h / 2;
 			int i = 0;
@@ -22,11 +22,7 @@ namespace Puzzler.Shaders
 			{
 				for (int x = 0; x < w; x++)
 				{
-					double angle = Math.Atan2(y - cY, x - cX) * RAD_TO_DEG;
-
-					// Clamp
-					while (angle < 0) angle += 360;
-					while (angle > 360) angle -= 360;
+					double angle = Utils.Rotate(Math.Atan2(y - cY, x - cX) * RAD_TO_DEG, cfg.Angle, 360);
 
 					// Get color
 					Utils.HsvToRgb(angle, 1, 1, out byte r, out byte g, out byte b);
@@ -37,5 +33,10 @@ namespace Puzzler.Shaders
 				}
 			}
 		}
+	}
+
+	public class ColorWheelGradientShaderConfig
+	{
+		public double Angle { get; set; }
 	}
 }

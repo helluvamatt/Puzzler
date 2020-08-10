@@ -72,7 +72,8 @@
     <Compile Include="Models\EnumDescriptor.cs" />
     <Compile Include="Models\Int32SizeDescriptor.cs" />
     <Compile Include="Models\Piece.cs" />
-    <Compile Include="Models\TypeDescriptor.cs" />
+    <Compile Include="Models\ShaderConfig\ShaderConfigPropertyCollection.cs" />
+    <Compile Include="Models\ShaderDescriptor.cs" />
     <Compile Include="Services\Animator.cs" />
     <Compile Include="Services\IDialogService.cs" />
     <Compile Include="Services\IWindowResourceService.cs" />
@@ -81,6 +82,11 @@
     <Compile Include="Shaders\JuliaSetShader.cs" />
     <Compile Include="Shaders\RandomSpheresShader.cs" />
     <Compile Include="Utils.cs" />
+    <Compile Include="Models\ShaderConfig\BaseConfigProperty.cs" />
+    <Compile Include="Models\ShaderConfig\CheckboxConfigProperty.cs" />
+    <Compile Include="Models\ShaderConfig\ColorConfigProperty.cs" />
+    <Compile Include="Models\ShaderConfig\NumberUpDownConfigProperty.cs" />
+    <Compile Include="Models\ShaderConfig\SliderConfigProperty.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\ImageGenViewModel.cs" />
     <Compile Include="ViewModels\MenuItemViewModel.cs" />
@@ -177,5 +183,6 @@
     <Resource Include="appicon.ico" />
     <Content Include="appicon.svg" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

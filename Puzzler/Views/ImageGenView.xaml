@@ -3,10 +3,12 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
 	  xmlns:c="clr-namespace:Puzzler.Controls"
 	  xmlns:conv="clr-namespace:Puzzler.Converters"
 	  xmlns:m="clr-namespace:Puzzler.Models"
       xmlns:vm="clr-namespace:Puzzler.ViewModels"
+	  xmlns:vmc="clr-namespace:Puzzler.Models.ShaderConfig"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
 	  d:DataContext="{d:DesignInstance Type={x:Type vm:ShellViewModel}, IsDesignTimeCreatable=False}"
@@ -43,26 +45,84 @@
 				<Button Margin="4" Command="{Binding GenerateImageCommand}">Generate Image</Button>
 				<Button Margin="4" Command="{Binding SaveImageCommand}">Save Image As...</Button>
 			</StackPanel>
-			<ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-				<StackPanel Orientation="Vertical" Margin="4">
-					<Label Margin="-2">Puzzle / Image Size</Label>
-					<ComboBox Margin="4" ItemsSource="{StaticResource puzzleSizes}" DisplayMemberPath="Description" SelectedItem="{Binding PuzzleSize}" />
-					<Label Margin="-2">Background Color</Label>
-					<Button Margin="4" HorizontalAlignment="Stretch" Padding="4" Name="bgColorButton" Command="{Binding ToggleBgColorPopupCommand}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
-						<Rectangle>
-							<Rectangle.Fill>
-								<SolidColorBrush Color="{Binding BackgroundColor}" />
-							</Rectangle.Fill>
-						</Rectangle>
-					</Button>
-					<Popup Width="350" Height="200" Placement="Bottom" PlacementTarget="{Binding ElementName=bgColorButton}" IsOpen="{Binding IsBgColorPopupOpen}" StaysOpen="False">
-						<c:ColorPicker SelectedColor="{Binding BackgroundColor}" />
-					</Popup>
-					<Label Margin="-2">Shader</Label>
-					<ComboBox Margin="4" DisplayMemberPath="Description" SelectedValuePath="Type"
-							  ItemsSource="{StaticResource shaders}" SelectedValue="{Binding ShaderType}" />
-				</StackPanel>
-			</ScrollViewer>
+			<StackPanel DockPanel.Dock="Top" Orientation="Vertical">
+				<Label Margin="-2">Puzzle / Image Size</Label>
+				<ComboBox Margin="4" ItemsSource="{StaticResource puzzleSizes}" DisplayMemberPath="Description" SelectedItem="{Binding PuzzleSize}" />
+				<Label Margin="-2">Shader</Label>
+				<ComboBox Margin="4" ItemsSource="{StaticResource shaders}" DisplayMemberPath="Description" SelectedItem="{Binding Shader}" />
+				<Label Margin="-2">Shader Configuration</Label>
+			</StackPanel>
+			<Border Margin="4,0" BorderThickness="1" BorderBrush="{StaticResource MahApps.Brushes.Control.Border}">
+				<ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+					<ItemsControl Margin="4" ItemsSource="{Binding Shader.Configuration}">
+						<ItemsControl.Style>
+							<Style TargetType="ItemsControl">
+								<Style.Triggers>
+									<Trigger Property="HasItems" Value="false">
+										<Setter Property="Template">
+											<Setter.Value>
+												<ControlTemplate>
+													<TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">This shader has no configuration.</TextBlock>
+												</ControlTemplate>
+											</Setter.Value>
+										</Setter>
+									</Trigger>
+								</Style.Triggers>
+							</Style>
+						</ItemsControl.Style>
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<StackPanel Orientation="Vertical" />
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.Resources>
+							<DataTemplate DataType="{x:Type vmc:ColorConfigProperty}">
+								<StackPanel Orientation="Vertical">
+									<Label Margin="-2" Content="{Binding Label}" />
+									<Button Margin="4" HorizontalAlignment="Stretch" Padding="4" Name="colorButton" Command="{Binding OpenColorPopupCommand}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+										<Rectangle>
+											<Rectangle.Fill>
+												<SolidColorBrush Color="{Binding Value}" />
+											</Rectangle.Fill>
+										</Rectangle>
+									</Button>
+									<Popup Width="350" Height="200" Placement="Bottom" PlacementTarget="{Binding ElementName=colorButton}" IsOpen="{Binding IsColorPopupOpen, Mode=TwoWay}" StaysOpen="False">
+										<c:ColorPicker SelectedColor="{Binding Value}" />
+									</Popup>
+								</StackPanel>
+							</DataTemplate>
+							<DataTemplate DataType="{x:Type vmc:SliderConfigProperty}">
+								<Grid>
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="*" />
+										<ColumnDefinition Width="auto" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+									<Grid.RowDefinitions>
+										<RowDefinition Height="auto" />
+										<RowDefinition Height="auto" />
+										<RowDefinition Height="auto" />
+									</Grid.RowDefinitions>
+									<Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="-2" Content="{Binding Label}" />
+									<TextBlock Grid.Row="1" Grid.Column="0" Margin="4,0" HorizontalAlignment="Left" Text="{Binding MinLabel}" Visibility="{Binding MinLabel, Converter={StaticResource nullToVisibilityConverter}}" />
+									<TextBlock Grid.Row="1" Grid.Column="1" Margin="4,0" HorizontalAlignment="Center" Text="{Binding FormattedValue}" />
+									<TextBlock Grid.Row="1" Grid.Column="2" Margin="4,0" HorizontalAlignment="Right" Text="{Binding MaxLabel}" Visibility="{Binding MaxLabel, Converter={StaticResource nullToVisibilityConverter}}" />
+									<Slider Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="4" Maximum="{Binding MaxValue}" Minimum="{Binding MinValue}" TickFrequency="{Binding Increment}" IsSnapToTickEnabled="True" TickPlacement="None" Value="{Binding Value}" />
+								</Grid>
+							</DataTemplate>
+							<DataTemplate DataType="{x:Type vmc:NumberUpDownConfigProperty}">
+								<StackPanel Orientation="Vertical">
+									<Label Margin="-2" Content="{Binding Label}" />
+									<mah:NumericUpDown Margin="4" Minimum="{Binding MinValue}" Maximum="{Binding MaxValue}" Interval="{Binding Increment}" Value="{Binding Value}" />
+								</StackPanel>
+							</DataTemplate>
+							<DataTemplate DataType="{x:Type vmc:CheckboxConfigProperty}">
+								<CheckBox Margin="4" IsChecked="{Binding Value}" Content="{Binding Label}" />
+							</DataTemplate>
+						</ItemsControl.Resources>
+					</ItemsControl>
+				</ScrollViewer>
+			</Border>
 		</DockPanel>
 		<Border Grid.Column="1" Margin="4" Background="DarkGray">
 			<Grid>

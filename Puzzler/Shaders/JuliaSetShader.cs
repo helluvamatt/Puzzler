@@ -1,16 +1,15 @@
-﻿namespace Puzzler.Shaders
+﻿using System;
+
+namespace Puzzler.Shaders
 {
 	public class JuliaSetShader : IShader
 	{
-		public void Render(byte[] buffer, int w, int h)
+        public Type ConfigurationType => typeof(JuliaSetShaderConfig);
+
+		public void Render(byte[] buffer, int w, int h, object config)
 		{
-            // TODO Parameterize zoom, moveX, moveY, hueOffset
-            // TODO Optionally parameterize cX, cY
-            const int zoom = 1;
+            var cfg = (JuliaSetShaderConfig)config;
             const int maxiter = 255;
-            const int moveX = 0;
-            const int moveY = 0;
-            const double hueOffset = 0.0;
             const double cX = -0.7;
             const double cY = 0.27015;
             double zx, zy, tmp;
@@ -19,8 +18,8 @@
             {
                 for (int y = 0; y < h; y++)
                 {
-                    zx = 1.5 * (x - w / 2) / (0.5 * zoom * w) + moveX;
-                    zy = 1.0 * (y - h / 2) / (0.5 * zoom * h) + moveY;
+                    zx = 1.5 * (x - w / 2) / (0.5 * cfg.Zoom * w) + cfg.MoveX;
+                    zy = 1.0 * (y - h / 2) / (0.5 * cfg.Zoom * h) + cfg.MoveY;
                     i = maxiter;
                     while (zx * zx + zy * zy < 4 && i > 1)
                     {
@@ -31,7 +30,7 @@
                     }
 
                     // set pixel
-                    Utils.HsvToRgb(Rotate((double)i / maxiter * 360.0, hueOffset, 360.0), 1, i, out byte r, out byte g, out byte b);
+                    Utils.HsvToRgb(Utils.Rotate((double)i / maxiter * 360.0, cfg.HueOffset, 360.0), 1, i, out byte r, out byte g, out byte b);
                     p = (y * w + x) * 4;
                     buffer[p + 0] = b; // B
                     buffer[p + 1] = g; // G
@@ -40,13 +39,13 @@
                 }
             }
         }
-
-        private static double Rotate(double val, double offset, double max)
-		{
-            val += offset;
-            while (val < 0) val += max;
-            while (val > max) val -= max;
-            return val;
-		}
 	}
+
+    public class JuliaSetShaderConfig
+	{
+        public double HueOffset { get; set; }
+        public double Zoom { get; set; }
+        public double MoveX { get; set; }
+        public double MoveY { get; set; }
+    }
 }

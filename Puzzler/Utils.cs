@@ -89,5 +89,13 @@ namespace Puzzler
                 if (hue < 0.0f) hue += 360.0f;
             }
         }
+
+        public static double Rotate(double val, double offset, double max)
+        {
+            val += offset;
+            while (val < 0) val += max;
+            while (val > max) val -= max;
+            return val;
+        }
     }
 }

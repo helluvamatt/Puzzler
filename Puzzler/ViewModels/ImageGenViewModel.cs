@@ -1,8 +1,10 @@
 ﻿using Puzzler.Controls;
 using Puzzler.Models;
+using Puzzler.Models.ShaderConfig;
 using Puzzler.Services;
 using Puzzler.Shaders;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -21,7 +23,7 @@ namespace Puzzler.ViewModels
 			_DialogService = dialogService;
 
 			ToggleBgColorPopupCommand = new DelegateCommand(() => IsBgColorPopupOpen = !IsBgColorPopupOpen);
-			GenerateImageCommand = new DelegateCommand(OnGenerateImage, () => ShaderType != null && PuzzleSize != null);
+			GenerateImageCommand = new DelegateCommand(OnGenerateImage, () => Shader != null && PuzzleSize != null);
 			SaveImageCommand = new DelegateCommand(OnSaveImage, () => GeneratedImage != null);
 		}
 
@@ -59,18 +61,6 @@ namespace Puzzler.ViewModels
 
 		#endregion
 
-		#region BackgroundColor
-
-		public static readonly DependencyProperty BackgroundColorProperty = DependencyProperty.Register(nameof(BackgroundColor), typeof(Color), typeof(ImageGenViewModel), new PropertyMetadata(Colors.Black));
-
-		public Color BackgroundColor
-		{
-			get => (Color)GetValue(BackgroundColorProperty);
-			set => SetValue(BackgroundColorProperty, value);
-		}
-
-		#endregion
-
 		#region GeneratedImage
 
 		public static readonly DependencyProperty GeneratedImageProperty = DependencyProperty.Register(nameof(GeneratedImage), typeof(BitmapSource), typeof(ImageGenViewModel), new PropertyMetadata(null));
@@ -85,12 +75,21 @@ namespace Puzzler.ViewModels
 
 		#region ShaderType
 
-		public static readonly DependencyProperty ShaderTypeProperty = DependencyProperty.Register(nameof(ShaderType), typeof(Type), typeof(ImageGenViewModel), new PropertyMetadata(null));
+		public static readonly DependencyProperty ShaderProperty = DependencyProperty.Register(nameof(Shader), typeof(ShaderDescriptor), typeof(ImageGenViewModel), new PropertyMetadata(null, OnShaderChanged));
 
-		public Type ShaderType
+		public ShaderDescriptor Shader
 		{
-			get => (Type)GetValue(ShaderTypeProperty);
-			set => SetValue(ShaderTypeProperty, value);
+			get => (ShaderDescriptor)GetValue(ShaderProperty);
+			set => SetValue(ShaderProperty, value);
+		}
+
+		private static void OnShaderChanged(DependencyObject owner, DependencyPropertyChangedEventArgs e)
+		{
+			var vm = (ImageGenViewModel)owner;
+			foreach (var prop in vm.Shader.Configuration)
+			{
+				prop.ResetValue();
+			}
 		}
 
 		#endregion
@@ -101,10 +100,29 @@ namespace Puzzler.ViewModels
 
 		private async void OnGenerateImage()
 		{
-			if (ShaderType == null || PuzzleSize == null) return;
+			if (Shader == null || PuzzleSize == null) return;
+
+			// Show progress window
+			var controller = await _DialogService.ShowProgressDialogAsync("Generating image...", $"Generating image: {Shader.Description}...", true);
 
 			// Instantiate shader
-			var shader = (IShader)Activator.CreateInstance(ShaderType);
+			var shader = (IShader)Activator.CreateInstance(Shader.Type);
+
+			// Build configuration
+			object config = null;
+			if (Shader.Configuration != null)
+			{
+				var configType = shader.ConfigurationType;
+				config = Activator.CreateInstance(configType);
+				foreach (var prop in Shader.Configuration)
+				{
+					var propInfo = configType.GetProperty(prop.Key);
+					if (propInfo != null)
+					{
+						propInfo.SetValue(config, prop.CurrentValue);
+					}
+				}
+			}
 
 			// Create bitmap
 			int width = PuzzleSize.Width * PuzzlePieceControl.GridSize;
@@ -113,32 +131,17 @@ namespace Puzzler.ViewModels
 			const int bpp = 4; // bytes per pixel
 			byte[] buffer = new byte[width * height * bpp];
 
-			// Fill buffer with background color
-			var bgColor = BackgroundColor;
-			byte r = bgColor.R;
-			byte g = bgColor.G;
-			byte b = bgColor.B;
-			byte a = 0xFF;
-			int i = 0;
-			for (int y = 0; y < height; y++)
-			{
-				for (int x = 0; x < width; x++)
-				{
-					buffer[i++] = b;
-					buffer[i++] = g;
-					buffer[i++] = r;
-					buffer[i++] = a;
-				}
-			}
-
 			// Render asynchronously
-			await Task.Run(() => shader.Render(buffer, width, height));
+			await Task.Run(() => shader.Render(buffer, width, height, config));
 
 			// Write to bitmap
 			bmp.WritePixels(new Int32Rect(0, 0, width, height), buffer, width * bpp, 0);
 			bmp.Freeze();
+
+			// Update VM state
 			GeneratedImage = bmp;
 			CommandManager.InvalidateRequerySuggested();
+			controller.Close();
 		}
 
 		private async void OnSaveImage()

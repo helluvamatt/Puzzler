@@ -1,10 +1,22 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:Puzzler.Shaders"
-					xmlns:m="clr-namespace:Puzzler.Models">
-	<x:Array x:Key="shaders" Type="{x:Type m:TypeDescriptor}">
-		<m:TypeDescriptor Description="Color Wheel" Type="{x:Type local:ColorWheelGradientShader}" />
-		<m:TypeDescriptor Description="Random Spheres" Type="{x:Type local:RandomSpheresShader}" />
-		<m:TypeDescriptor Description="Julia Set" Type="{x:Type local:JuliaSetShader}" />
+					xmlns:m="clr-namespace:Puzzler.Models"
+					xmlns:mc="clr-namespace:Puzzler.Models.ShaderConfig">
+	<x:Array x:Key="shaders" Type="{x:Type m:ShaderDescriptor}">
+		<m:ShaderDescriptor Description="Color Wheel" Type="{x:Type local:ColorWheelGradientShader}">
+			<mc:SliderConfigProperty Key="Angle" Label="Angle" Increment="0.1" MaxValue="360" MinValue="0" MaxLabel="360º" MinLabel="0º" ValueFormat="{}{0}º" />
+		</m:ShaderDescriptor>
+		<m:ShaderDescriptor Description="Random Spheres" Type="{x:Type local:RandomSpheresShader}">
+			<mc:ColorConfigProperty Key="BackgroundColor" Label="Background Color" DefaultValue="Black" />
+			<mc:SliderConfigProperty Key="MaxSphereSize" Label="Max Sphere Size" DefaultValue="0.1" Increment="0.01" MinValue="0.05" MaxValue="0.2" MinLabel="5%" MaxLabel="20%" ValueFormat="{}{0:P0}" />
+			<mc:NumberUpDownConfigProperty Key="SphereCount" Label="Number of Spheres" DefaultValue="10" Increment="1" MinValue="1" MaxValue="100" />
+		</m:ShaderDescriptor>
+		<m:ShaderDescriptor Description="Julia Set" Type="{x:Type local:JuliaSetShader}">
+			<mc:SliderConfigProperty Key="HueOffset" Label="Hue Offset" DefaultValue="0" Increment="0.1" MinValue="0" MaxValue="360" MinLabel="0º" MaxLabel="360º" ValueFormat="{}{0:0.0}º" />
+			<mc:SliderConfigProperty Key="Zoom" Label="Zoom" DefaultValue="1" Increment="0.1" MinValue="1" MaxValue="10" MinLabel="1x" MaxLabel="10x" ValueFormat="{}{0:0.0}x" />
+			<mc:SliderConfigProperty Key="MoveX" Label="X Offset" DefaultValue="0" Increment="0.01" MinValue="-1" MaxValue="1" MinLabel="- 100%" MaxLabel="100%" ValueFormat="{}{0:P0}" />
+			<mc:SliderConfigProperty Key="MoveY" Label="Y Offset" DefaultValue="0" Increment="0.01" MinValue="-1" MaxValue="1" MinLabel="- 100%" MaxLabel="100%" ValueFormat="{}{0:P0}" />
+		</m:ShaderDescriptor>
 	</x:Array>
 </ResourceDictionary>

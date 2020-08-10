@@ -1,9 +1,10 @@
-﻿using System.Windows.Media.Imaging;
+﻿using System;
 
 namespace Puzzler.Shaders
 {
 	public interface IShader
 	{
-		void Render(byte[] buffer, int w, int h);
+		Type ConfigurationType { get; }
+		void Render(byte[] buffer, int w, int h, object config);
 	}
 }
